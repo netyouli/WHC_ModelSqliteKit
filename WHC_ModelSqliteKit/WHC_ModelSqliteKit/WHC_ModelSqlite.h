@@ -8,6 +8,8 @@
 //  This source code is licensed under the MIT-style license found in the
 //  LICENSE file in the root directory of this source tree.
 
+// Github<https://github.com/netyouli/WHC_ModelSqliteKit>
+
 #import <Foundation/Foundation.h>
 
 @interface WHC_ModelSqlite : NSObject

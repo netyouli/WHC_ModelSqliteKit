@@ -54,12 +54,12 @@ NSArray * personArray = [WHC_ModelSqlite update:whc where:@"name = '吴海超2' 
 [WHC_ModelSqlite removeModel:[Person class]];
 ```
 
-####7.删除所有数据库演示
+####8.删除所有数据库演示
 ```objective-c
 [WHC_ModelSqlite removeAllModel];
 ```
 
-####8.获取数据库本地路径演示
+####9.获取数据库本地路径演示
 ```objective-c
 NSString * path = [WHC_ModelSqlite localPathWithModel:[Person class]];
 ```
