@@ -36,30 +36,34 @@ NSArray * personArray = [WHC_ModelSqlite query:[Person class] where:nil];
 
 ####4.条件查询数据库中模型类演示(where 条件查询语法和sql where条件查询语法一样)
 ```objective-c
-NSArray * personArray = [WHC_ModelSqlite update:whc where:@"name = '吴海超2' OR age <= 18"];
+NSArray * personArray = [WHC_ModelSqlite query:[Person class] where:@"name = '吴海超2' OR age <= 18"];
 ```
 
-####5.删除数据库中模型对象演示(where条件查询为空则删除所有)
+####5.修改数据库中模型对象演示(where 条件查询语法和sql where条件查询语法一样) 
+```objective-c
+[WHC_ModelSqlite update:whc where:@"name = '吴海超2' OR age <= 18"];
+```
+####6.删除数据库中模型对象演示(where条件查询为空则删除所有)
 ```objective-c
 [WHC_ModelSqlite delete:[Person class] where:@"age = 25 AND name = '吴海超'"];
 ```
 
-####6.清空指定数据库演示
+####7.清空指定数据库演示
 ```objective-c
 [WHC_ModelSqlite clear:[Person class]];
 ```
 
-####7.删除数据库演示
+####8.删除数据库演示
 ```objective-c
 [WHC_ModelSqlite removeModel:[Person class]];
 ```
 
-####8.删除所有数据库演示
+####9.删除所有数据库演示
 ```objective-c
 [WHC_ModelSqlite removeAllModel];
 ```
 
-####9.获取数据库本地路径演示
+####10.获取数据库本地路径演示
 ```objective-c
 NSString * path = [WHC_ModelSqlite localPathWithModel:[Person class]];
 ```
