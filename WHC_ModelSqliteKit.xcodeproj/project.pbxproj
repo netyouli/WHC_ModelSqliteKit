@@ -16,6 +16,7 @@
 		84748B0F1CF9FC8C00139F82 /* WHC_ModelSqlite.m in Sources */ = {isa = PBXBuildFile; fileRef = 84748B0E1CF9FC8C00139F82 /* WHC_ModelSqlite.m */; };
 		84748B111CF9FD4C00139F82 /* libsqlite3.0.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 84748B101CF9FD4C00139F82 /* libsqlite3.0.tbd */; };
 		84748B131CFA25A400139F82 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 84748B121CFA25A400139F82 /* README.md */; };
+		84748B151CFA310B00139F82 /* WHC_ModelSqliteKit.podspec in Resources */ = {isa = PBXBuildFile; fileRef = 84748B141CFA310B00139F82 /* WHC_ModelSqliteKit.podspec */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,6 +34,7 @@
 		84748B0E1CF9FC8C00139F82 /* WHC_ModelSqlite.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WHC_ModelSqlite.m; sourceTree = "<group>"; };
 		84748B101CF9FD4C00139F82 /* libsqlite3.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
 		84748B121CFA25A400139F82 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		84748B141CFA310B00139F82 /* WHC_ModelSqliteKit.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = WHC_ModelSqliteKit.podspec; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,6 +52,7 @@
 		84748AE91CF9FC4000139F82 = {
 			isa = PBXGroup;
 			children = (
+				84748B141CFA310B00139F82 /* WHC_ModelSqliteKit.podspec */,
 				84748B121CFA25A400139F82 /* README.md */,
 				84748B101CF9FD4C00139F82 /* libsqlite3.0.tbd */,
 				84748AF41CF9FC4000139F82 /* WHC_ModelSqliteKit */,
@@ -158,6 +161,7 @@
 			files = (
 				84748B051CF9FC4000139F82 /* LaunchScreen.storyboard in Resources */,
 				84748B021CF9FC4000139F82 /* Assets.xcassets in Resources */,
+				84748B151CFA310B00139F82 /* WHC_ModelSqliteKit.podspec in Resources */,
 				84748B001CF9FC4000139F82 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
