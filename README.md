@@ -7,7 +7,7 @@
 ##### 1.专业数据模型存储解决方案(告别直接使用sqlite和coreData)
 ##### 2.告别繁琐sql语句的编写
 ##### 3.告别coreData复杂繁琐创建
-##### 4.WHC_ModelSqliteKit采用运行时技术动态识别模型对属性信息智能创建和编辑数据库
+##### 4.WHC_ModelSqliteKit采用运行时技术动态识别模型属性信息智能创建和编辑数据库
 ##### 5.目前支持字段存储类型(NSString,Int,double,float,Bool,char,NSNuber)不支持模型类嵌套
 
 ####1.存储单个模型对象到数据库演示
