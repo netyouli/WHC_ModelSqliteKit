@@ -15,6 +15,7 @@
 		84748B051CF9FC4000139F82 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 84748B031CF9FC4000139F82 /* LaunchScreen.storyboard */; };
 		84748B0F1CF9FC8C00139F82 /* WHC_ModelSqlite.m in Sources */ = {isa = PBXBuildFile; fileRef = 84748B0E1CF9FC8C00139F82 /* WHC_ModelSqlite.m */; };
 		84748B111CF9FD4C00139F82 /* libsqlite3.0.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 84748B101CF9FD4C00139F82 /* libsqlite3.0.tbd */; };
+		84748B131CFA25A400139F82 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 84748B121CFA25A400139F82 /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +32,7 @@
 		84748B0D1CF9FC8C00139F82 /* WHC_ModelSqlite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WHC_ModelSqlite.h; sourceTree = "<group>"; };
 		84748B0E1CF9FC8C00139F82 /* WHC_ModelSqlite.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WHC_ModelSqlite.m; sourceTree = "<group>"; };
 		84748B101CF9FD4C00139F82 /* libsqlite3.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
+		84748B121CFA25A400139F82 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,6 +50,7 @@
 		84748AE91CF9FC4000139F82 = {
 			isa = PBXGroup;
 			children = (
+				84748B121CFA25A400139F82 /* README.md */,
 				84748B101CF9FD4C00139F82 /* libsqlite3.0.tbd */,
 				84748AF41CF9FC4000139F82 /* WHC_ModelSqliteKit */,
 				84748AF31CF9FC4000139F82 /* Products */,
@@ -168,6 +171,7 @@
 			files = (
 				84748AFD1CF9FC4000139F82 /* ViewController.m in Sources */,
 				84748AFA1CF9FC4000139F82 /* AppDelegate.m in Sources */,
+				84748B131CFA25A400139F82 /* README.md in Sources */,
 				84748B0F1CF9FC8C00139F82 /* WHC_ModelSqlite.m in Sources */,
 				84748AF71CF9FC4000139F82 /* main.m in Sources */,
 			);
