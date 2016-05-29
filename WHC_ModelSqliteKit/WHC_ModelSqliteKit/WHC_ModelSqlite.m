@@ -303,162 +303,175 @@ static sqlite3 * database;
 }
 
 + (BOOL)insertArray:(NSArray *)model_array {
-    if (!(model_array != nil && model_array.count > 0)) {
-        return NO;
+    @synchronized ([self shareInstance]) {
+        if (!(model_array != nil && model_array.count > 0)) {
+            return NO;
+        }
+        if (![self openTable:[model_array.firstObject class]]) return NO;
+        [self execSql:@"BEIGIN"];
+        for (id model_object in model_array) {
+            [self commonInsert:model_object];
+        }
+        int result = [self execSql:@"COMMIT"];
+        [self close];
+        return result == SQLITE_OK;
     }
-    if (![self openTable:[model_array.firstObject class]]) return NO;
-    [self execSql:@"BEIGIN"];
-    for (id model_object in model_array) {
-        [self commonInsert:model_object];
-    }
-    int result = [self execSql:@"COMMIT"];
-    [self close];
-    return result == SQLITE_OK;
 }
 
 + (BOOL)insert:(id)model_object {
-    if (![self openTable:[model_object class]]) return NO;
-    [self execSql:@"BEIGIN"];
-    [self commonInsert:model_object];
-    int result = [self execSql:@"COMMIT"];
-    [self close];
-    return result == SQLITE_OK;
+    @synchronized ([self shareInstance]) {
+        if (![self openTable:[model_object class]]) return NO;
+        [self execSql:@"BEIGIN"];
+        [self commonInsert:model_object];
+        int result = [self execSql:@"COMMIT"];
+        [self close];
+        return result == SQLITE_OK;
+    }
 }
 
 + (NSArray *)query:(Class)model_class where:(NSString *)where {
-    if (![self openTable:model_class]) return @[];
-    NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:model_class];
-    NSString * table_name = NSStringFromClass(model_class);
-    NSString * select_sql = [NSString stringWithFormat:@"SELECT * FROM %@",table_name];
-    if (where != nil && where.length > 0) {
-        select_sql = [select_sql stringByAppendingFormat:@" WHERE %@",where];
-    }
-    NSMutableArray * model_object_array = [NSMutableArray array];
-    sqlite3_stmt * pp_stmt = nil;
-    if (sqlite3_prepare_v2(database, [select_sql UTF8String], -1, &pp_stmt, nil) == SQLITE_OK) {
-        while (sqlite3_step(pp_stmt) == SQLITE_ROW) {
-            id model_object = [model_class new];
-            int colum_count = sqlite3_column_count(pp_stmt);
-            for (int column = 1; column < colum_count; column++) {
-                NSString * field_name = [NSString stringWithCString:sqlite3_column_name(pp_stmt, column) encoding:NSUTF8StringEncoding];
-                WHC_PropertyInfo * property_info = field_dictionary[field_name];
-                switch (property_info.type) {
-                    case _String: {
-                        NSString * value = [NSString stringWithCString:(const char *)sqlite3_column_text(pp_stmt, column) encoding:NSUTF8StringEncoding];
-                        [model_object setValue:value forKey:field_name];
-                    }
-                        break;
-                    case _Int: {
-                        sqlite3_int64 value = sqlite3_column_int64(pp_stmt, column);
-                        ((void (*)(id, SEL, int64_t))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
-                    }
-                        break;
-                    case _Float: {
-                        double value = sqlite3_column_double(pp_stmt, column);
-                        ((void (*)(id, SEL, float))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
-                    }
-                        break;
-                    case _Double: {
-                        double value = sqlite3_column_double(pp_stmt, column);
-                        ((void (*)(id, SEL, double))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
-                    }
-                        break;
-                    case _Char: {
-                        int value = sqlite3_column_int(pp_stmt, column);
-                        ((void (*)(id, SEL, int))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
-                    }
-                        break;
-                    case _Boolean: {
-                        int value = sqlite3_column_int(pp_stmt, column);
-                        ((void (*)(id, SEL, int))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
-                    }
-                        break;
-                    default:
-                        break;
-                }
-            }
-            [model_object_array addObject:model_object];
+    @synchronized ([self shareInstance]) {
+        if (![self openTable:model_class]) return @[];
+        NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:model_class];
+        NSString * table_name = NSStringFromClass(model_class);
+        NSString * select_sql = [NSString stringWithFormat:@"SELECT * FROM %@",table_name];
+        if (where != nil && where.length > 0) {
+            select_sql = [select_sql stringByAppendingFormat:@" WHERE %@",where];
         }
-    }else {
-        NSLog(@"查询语句异常");
+        NSMutableArray * model_object_array = [NSMutableArray array];
+        sqlite3_stmt * pp_stmt = nil;
+        if (sqlite3_prepare_v2(database, [select_sql UTF8String], -1, &pp_stmt, nil) == SQLITE_OK) {
+            while (sqlite3_step(pp_stmt) == SQLITE_ROW) {
+                id model_object = [model_class new];
+                int colum_count = sqlite3_column_count(pp_stmt);
+                for (int column = 1; column < colum_count; column++) {
+                    NSString * field_name = [NSString stringWithCString:sqlite3_column_name(pp_stmt, column) encoding:NSUTF8StringEncoding];
+                    WHC_PropertyInfo * property_info = field_dictionary[field_name];
+                    if (property_info == nil) continue;
+                    switch (property_info.type) {
+                        case _String: {
+                            NSString * value = [NSString stringWithCString:(const char *)sqlite3_column_text(pp_stmt, column) encoding:NSUTF8StringEncoding];
+                            [model_object setValue:value forKey:field_name];
+                        }
+                            break;
+                        case _Int: {
+                            sqlite3_int64 value = sqlite3_column_int64(pp_stmt, column);
+                            ((void (*)(id, SEL, int64_t))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
+                        }
+                            break;
+                        case _Float: {
+                            double value = sqlite3_column_double(pp_stmt, column);
+                            ((void (*)(id, SEL, float))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
+                        }
+                            break;
+                        case _Double: {
+                            double value = sqlite3_column_double(pp_stmt, column);
+                            ((void (*)(id, SEL, double))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
+                        }
+                            break;
+                        case _Char: {
+                            int value = sqlite3_column_int(pp_stmt, column);
+                            ((void (*)(id, SEL, int))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
+                        }
+                            break;
+                        case _Boolean: {
+                            int value = sqlite3_column_int(pp_stmt, column);
+                            ((void (*)(id, SEL, int))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
+                        }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                [model_object_array addObject:model_object];
+            }
+        }else {
+            NSLog(@"查询语句异常");
+        }
+        sqlite3_finalize(pp_stmt);
+        [self close];
+        return model_object_array;
     }
-    sqlite3_finalize(pp_stmt);
-    [self close];
-    return model_object_array;
 }
 
 + (BOOL)update:(id)model_object where:(NSString *)where {
-    if (model_object == nil) return NO;
-    if (![self openTable:[model_object class]]) return NO;
-    NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:[model_object class]];
-    NSString * table_name = NSStringFromClass([model_object class]);
-    __block NSString * update_sql = [NSString stringWithFormat:@"UPDATE %@ SET ",table_name];
-    
-    NSArray * field_array = field_dictionary.allKeys;
-    [field_array enumerateObjectsUsingBlock:^(id  _Nonnull field, NSUInteger idx, BOOL * _Nonnull stop) {
-        WHC_PropertyInfo * property_info = field_dictionary[field];
-        switch (property_info.type) {
-            case _String: {
-                NSString * value = [model_object valueForKey:field];
-                if (value == nil) {
-                    value = @"";
+    @synchronized ([self shareInstance]) {
+        if (model_object == nil) return NO;
+        if (![self openTable:[model_object class]]) return NO;
+        NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:[model_object class]];
+        NSString * table_name = NSStringFromClass([model_object class]);
+        __block NSString * update_sql = [NSString stringWithFormat:@"UPDATE %@ SET ",table_name];
+        
+        NSArray * field_array = field_dictionary.allKeys;
+        [field_array enumerateObjectsUsingBlock:^(id  _Nonnull field, NSUInteger idx, BOOL * _Nonnull stop) {
+            WHC_PropertyInfo * property_info = field_dictionary[field];
+            switch (property_info.type) {
+                case _String: {
+                    NSString * value = [model_object valueForKey:field];
+                    if (value == nil) {
+                        value = @"";
+                    }
+                    update_sql = [update_sql stringByAppendingFormat:@"%@ = '%@',",field,value];
                 }
-                update_sql = [update_sql stringByAppendingFormat:@"%@ = '%@',",field,value];
+                    break;
+                case _Int: {
+                    int64_t value = ((int64_t (*)(id, SEL))(void *) objc_msgSend)((id)model_object, property_info.getter);
+                    update_sql = [update_sql stringByAppendingFormat:@"%@ = %lld,",field,value];
+                }
+                    break;
+                case _Char: {
+                    char value = ((char (*)(id, SEL))(void *) objc_msgSend)((id)model_object, property_info.getter);
+                    update_sql = [update_sql stringByAppendingFormat:@"%@ = %c,",field,value];
+                }
+                    break;
+                case _Float: {
+                    float value = ((float (*)(id, SEL))(void *) objc_msgSend)((id)model_object, property_info.getter);
+                    update_sql = [update_sql stringByAppendingFormat:@"%@ = %f,",field,value];
+                }
+                    break;
+                case _Double: {
+                    double value = ((double (*)(id, SEL))(void *) objc_msgSend)((id)model_object, property_info.getter);
+                    update_sql = [update_sql stringByAppendingFormat:@"%@ = %f,",field,value];
+                }
+                    break;
+                case _Boolean: {
+                    BOOL value = ((BOOL (*)(id, SEL))(void *) objc_msgSend)((id)model_object, property_info.getter);
+                    update_sql = [update_sql stringByAppendingFormat:@"%@ = %d,",field,value];
+                }
+                    break;
+                default:
+                    break;
             }
-                break;
-            case _Int: {
-                int64_t value = ((int64_t (*)(id, SEL))(void *) objc_msgSend)((id)model_object, property_info.getter);
-                update_sql = [update_sql stringByAppendingFormat:@"%@ = %lld,",field,value];
-            }
-                break;
-            case _Char: {
-                char value = ((char (*)(id, SEL))(void *) objc_msgSend)((id)model_object, property_info.getter);
-                update_sql = [update_sql stringByAppendingFormat:@"%@ = %c,",field,value];
-            }
-                break;
-            case _Float: {
-                float value = ((float (*)(id, SEL))(void *) objc_msgSend)((id)model_object, property_info.getter);
-                update_sql = [update_sql stringByAppendingFormat:@"%@ = %f,",field,value];
-            }
-                break;
-            case _Double: {
-                double value = ((double (*)(id, SEL))(void *) objc_msgSend)((id)model_object, property_info.getter);
-                update_sql = [update_sql stringByAppendingFormat:@"%@ = %f,",field,value];
-            }
-                break;
-            case _Boolean: {
-                BOOL value = ((BOOL (*)(id, SEL))(void *) objc_msgSend)((id)model_object, property_info.getter);
-                update_sql = [update_sql stringByAppendingFormat:@"%@ = %d,",field,value];
-            }
-                break;
-            default:
-                break;
+        }];
+        
+        update_sql = [update_sql substringWithRange:NSMakeRange(0, update_sql.length - 1)];
+        if (where != nil && where.length > 0) {
+            update_sql = [update_sql stringByAppendingFormat:@" WHERE %@", where];
         }
-    }];
-    
-    update_sql = [update_sql substringWithRange:NSMakeRange(0, update_sql.length - 1)];
-    if (where != nil && where.length > 0) {
-        update_sql = [update_sql stringByAppendingFormat:@" WHERE %@", where];
+        int result = [self execSql:update_sql];
+        [self close];
+        return result == SQLITE_OK;
     }
-    int result = [self execSql:update_sql];
-    [self close];
-    return result == SQLITE_OK;
 }
 
 + (BOOL)clear:(Class)model_class {
-    return [self delete:model_class where:nil];
+    @synchronized ([self shareInstance]) {
+        return [self delete:model_class where:nil];
+    }
 }
 
 + (BOOL)delete:(Class)model_class where:(NSString *)where {
-    if (![self openTable:model_class]) return NO;
-    NSString * table_name = NSStringFromClass(model_class);
-    NSString * delete_sql = [NSString stringWithFormat:@"DELETE FROM %@",table_name];
-    if (where != nil && where.length > 0) {
-        delete_sql = [delete_sql stringByAppendingFormat:@" WHERE %@",where];
+    @synchronized ([self shareInstance]) {
+        if (![self openTable:model_class]) return NO;
+        NSString * table_name = NSStringFromClass(model_class);
+        NSString * delete_sql = [NSString stringWithFormat:@"DELETE FROM %@",table_name];
+        if (where != nil && where.length > 0) {
+            delete_sql = [delete_sql stringByAppendingFormat:@" WHERE %@",where];
+        }
+        int result = [self execSql:delete_sql];
+        [self close];
+        return result == SQLITE_OK;
     }
-    int result = [self execSql:delete_sql];
-    [self close];
-    return result == SQLITE_OK;
 }
 
 + (void)close {
@@ -469,28 +482,32 @@ static sqlite3 * database;
 }
 
 + (void)removeAllModel {
-    @autoreleasepool {
-        NSFileManager * file_manager = [NSFileManager defaultManager];
-        NSString * cache_path = [self databaseCacheDirectory];
-        BOOL is_directory = YES;
-        if ([file_manager fileExistsAtPath:cache_path isDirectory:&is_directory]) {
-            NSArray * file_array = [file_manager contentsOfDirectoryAtPath:cache_path error:nil];
-            [file_array enumerateObjectsUsingBlock:^(id  _Nonnull file, NSUInteger idx, BOOL * _Nonnull stop) {
-                if (![file isEqualToString:@".DS_Store"]) {
-                    NSString * file_path = [NSString stringWithFormat:@"%@,%@",cache_path,file];
-                    [file_manager removeItemAtPath:file_path error:nil];
-                }
-            }];
+    @synchronized ([self shareInstance]) {
+        @autoreleasepool {
+            NSFileManager * file_manager = [NSFileManager defaultManager];
+            NSString * cache_path = [self databaseCacheDirectory];
+            BOOL is_directory = YES;
+            if ([file_manager fileExistsAtPath:cache_path isDirectory:&is_directory]) {
+                NSArray * file_array = [file_manager contentsOfDirectoryAtPath:cache_path error:nil];
+                [file_array enumerateObjectsUsingBlock:^(id  _Nonnull file, NSUInteger idx, BOOL * _Nonnull stop) {
+                    if (![file isEqualToString:@".DS_Store"]) {
+                        NSString * file_path = [NSString stringWithFormat:@"%@,%@",cache_path,file];
+                        [file_manager removeItemAtPath:file_path error:nil];
+                    }
+                }];
+            }
         }
     }
 }
 
 + (void)removeModel:(Class)model_class {
-    @autoreleasepool {
-        NSFileManager * file_manager = [NSFileManager defaultManager];
-        NSString * file_path = [self localPathWithModel:model_class];
-        if ([file_manager fileExistsAtPath:file_path]) {
-            [file_manager removeItemAtPath:file_path error:nil];
+    @synchronized ([self shareInstance]) {
+        @autoreleasepool {
+            NSFileManager * file_manager = [NSFileManager defaultManager];
+            NSString * file_path = [self localPathWithModel:model_class];
+            if ([file_manager fileExistsAtPath:file_path]) {
+                [file_manager removeItemAtPath:file_path error:nil];
+            }
         }
     }
 }
