@@ -46,6 +46,19 @@
     whc.isDeveloper = YES;
     whc.sex = 'm';
     
+    /// 线程安全测试
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        if ([WHC_ModelSqlite insert:whc]) {
+            NSLog(@"1.存储单个模型对象到数据库演示代码");
+        }
+    });
+    
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        if ([WHC_ModelSqlite insert:whc]) {
+            NSLog(@"1.存储单个模型对象到数据库演示代码");
+        }
+    });
+    
     if ([WHC_ModelSqlite insert:whc]) {
         NSLog(@"1.存储单个模型对象到数据库演示代码");
     }
