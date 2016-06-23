@@ -1,8 +1,8 @@
 //
-//  AppDelegate.h
+//  School.h
 //  WHC_ModelSqliteKit
 //
-//  Created by admin on 16/5/29.
+//  Created by WHC on 16/6/21.
 //  Copyright © 2016年 WHC. All rights reserved.
 //
 
@@ -27,12 +27,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#import <UIKit/UIKit.h>
-
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
-
-@property (strong, nonatomic) UIWindow *window;
-
-
+#import <Foundation/Foundation.h>
+#import "City.h"
+@interface School : NSObject
+@property (nonatomic, copy)NSString * name;
+@property (nonatomic, assign)NSUInteger personCount;
+@property (nonatomic, strong)City * city;
++ (NSString *)VERSION;
 @end
-

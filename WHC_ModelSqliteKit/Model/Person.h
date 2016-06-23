@@ -1,8 +1,8 @@
 //
-//  AppDelegate.h
+//  Person.h
 //  WHC_ModelSqliteKit
 //
-//  Created by admin on 16/5/29.
+//  Created by WHC on 16/6/21.
 //  Copyright © 2016年 WHC. All rights reserved.
 //
 
@@ -27,12 +27,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+#import "Car.h"
+#import "School.h"
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
-
-@property (strong, nonatomic) UIWindow *window;
-
-
+@interface Person : NSObject
+@property (nonatomic, copy) NSString * name;
+@property (nonatomic, assign) NSInteger age;
+@property (nonatomic, assign) float weight;
+@property (nonatomic, assign) double height;
+@property (nonatomic, assign) BOOL isDeveloper;
+@property (nonatomic, strong) NSString * xx;
+@property (nonatomic, strong) NSString * yy;
+@property (nonatomic, strong) NSString * ww;
+@property (nonatomic, assign) char sex;
+@property (nonatomic, strong) NSString * type;
+@property (nonatomic, strong) Car * car;
+@property (nonatomic, strong) School * school;
++ (NSString *)VERSION;
 @end
-

@@ -1,11 +1,10 @@
 //
-//  AppDelegate.h
+//  Car.m
 //  WHC_ModelSqliteKit
 //
-//  Created by admin on 16/5/29.
+//  Created by WHC on 16/6/21.
 //  Copyright © 2016年 WHC. All rights reserved.
 //
-
 // Github <https://github.com/netyouli/WHC_ModelSqliteKit>
 
 //
@@ -27,12 +26,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#import <UIKit/UIKit.h>
+#import "Car.h"
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
-
-@property (strong, nonatomic) UIWindow *window;
-
-
+@implementation Car
++ (NSString *)VERSION {
+    return @"1.0";
+}
 @end
-

@@ -17,6 +17,10 @@
 		84748B111CF9FD4C00139F82 /* libsqlite3.0.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 84748B101CF9FD4C00139F82 /* libsqlite3.0.tbd */; };
 		84748B131CFA25A400139F82 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 84748B121CFA25A400139F82 /* README.md */; };
 		84748B151CFA310B00139F82 /* WHC_ModelSqliteKit.podspec in Resources */ = {isa = PBXBuildFile; fileRef = 84748B141CFA310B00139F82 /* WHC_ModelSqliteKit.podspec */; };
+		FEFFE3311D1B9FC800DF0865 /* Car.m in Sources */ = {isa = PBXBuildFile; fileRef = FEFFE32A1D1B9FC800DF0865 /* Car.m */; };
+		FEFFE3321D1B9FC800DF0865 /* City.m in Sources */ = {isa = PBXBuildFile; fileRef = FEFFE32C1D1B9FC800DF0865 /* City.m */; };
+		FEFFE3331D1B9FC800DF0865 /* Person.m in Sources */ = {isa = PBXBuildFile; fileRef = FEFFE32E1D1B9FC800DF0865 /* Person.m */; };
+		FEFFE3341D1B9FC800DF0865 /* School.m in Sources */ = {isa = PBXBuildFile; fileRef = FEFFE3301D1B9FC800DF0865 /* School.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +39,14 @@
 		84748B101CF9FD4C00139F82 /* libsqlite3.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
 		84748B121CFA25A400139F82 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		84748B141CFA310B00139F82 /* WHC_ModelSqliteKit.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = WHC_ModelSqliteKit.podspec; sourceTree = "<group>"; };
+		FEFFE3291D1B9FC800DF0865 /* Car.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Car.h; sourceTree = "<group>"; };
+		FEFFE32A1D1B9FC800DF0865 /* Car.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Car.m; sourceTree = "<group>"; };
+		FEFFE32B1D1B9FC800DF0865 /* City.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = City.h; sourceTree = "<group>"; };
+		FEFFE32C1D1B9FC800DF0865 /* City.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = City.m; sourceTree = "<group>"; };
+		FEFFE32D1D1B9FC800DF0865 /* Person.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Person.h; sourceTree = "<group>"; };
+		FEFFE32E1D1B9FC800DF0865 /* Person.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Person.m; sourceTree = "<group>"; };
+		FEFFE32F1D1B9FC800DF0865 /* School.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = School.h; sourceTree = "<group>"; };
+		FEFFE3301D1B9FC800DF0865 /* School.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = School.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +83,7 @@
 		84748AF41CF9FC4000139F82 /* WHC_ModelSqliteKit */ = {
 			isa = PBXGroup;
 			children = (
+				FEFFE3281D1B9FC800DF0865 /* Model */,
 				84748B0C1CF9FC6600139F82 /* WHC_ModelSqliteKit */,
 				84748AF81CF9FC4000139F82 /* AppDelegate.h */,
 				84748AF91CF9FC4000139F82 /* AppDelegate.m */,
@@ -100,6 +113,21 @@
 				84748B0E1CF9FC8C00139F82 /* WHC_ModelSqlite.m */,
 			);
 			path = WHC_ModelSqliteKit;
+			sourceTree = "<group>";
+		};
+		FEFFE3281D1B9FC800DF0865 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				FEFFE3291D1B9FC800DF0865 /* Car.h */,
+				FEFFE32A1D1B9FC800DF0865 /* Car.m */,
+				FEFFE32B1D1B9FC800DF0865 /* City.h */,
+				FEFFE32C1D1B9FC800DF0865 /* City.m */,
+				FEFFE32D1D1B9FC800DF0865 /* Person.h */,
+				FEFFE32E1D1B9FC800DF0865 /* Person.m */,
+				FEFFE32F1D1B9FC800DF0865 /* School.h */,
+				FEFFE3301D1B9FC800DF0865 /* School.m */,
+			);
+			path = Model;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -173,11 +201,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FEFFE3311D1B9FC800DF0865 /* Car.m in Sources */,
 				84748AFD1CF9FC4000139F82 /* ViewController.m in Sources */,
+				FEFFE3331D1B9FC800DF0865 /* Person.m in Sources */,
 				84748AFA1CF9FC4000139F82 /* AppDelegate.m in Sources */,
 				84748B131CFA25A400139F82 /* README.md in Sources */,
 				84748B0F1CF9FC8C00139F82 /* WHC_ModelSqlite.m in Sources */,
+				FEFFE3321D1B9FC800DF0865 /* City.m in Sources */,
 				84748AF71CF9FC4000139F82 /* main.m in Sources */,
+				FEFFE3341D1B9FC800DF0865 /* School.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -290,6 +322,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = WHC_ModelSqliteKit/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "WHC.WHC-ModelSqliteKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -301,6 +334,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = WHC_ModelSqliteKit/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "WHC.WHC-ModelSqliteKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -326,6 +360,7 @@
 				84748B0B1CF9FC4000139F82 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

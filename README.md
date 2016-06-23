@@ -2,15 +2,19 @@
 
 ##### 联系QQ: 712641411
 ##### 开发作者: 吴海超
-##### iOS技术交流群: 302157745
+##### iOS数据存储交流群: 490149447
 
 ##### 1.专业数据模型存储解决方案(告别直接使用sqlite和coreData)
 ##### 2.告别繁琐sql语句的编写
 ##### 3.告别coreData复杂繁琐创建
 ##### 4.WHC_ModelSqliteKit采用运行时技术动态识别模型属性信息智能创建和编辑数据库
-##### 5.目前支持字段存储类型(NSString,Int,double,float,Bool,char,NSNuber)不支持模型类嵌套
+##### 5.目前支持字段存储类型(NSString,Int,double,float,Bool,char,NSNumber)
+##### 6.直接淘汰FMDB开源库
+### 7.支持模型嵌套模型类存储到数据库，多表嵌套联查
+### 8.智能根据模型属性名称类型更新模型数据库表里字段(动态添加字段和删除字段)
+### 9.告别数据库字段变更带来的烦恼
 
-####1.存储单个模型对象到数据库演示
+####1.存储嵌套模型对象到数据库演示
 ```objective-c
 Person * whc = [Person new];
 whc.name = @"吴海超";
@@ -19,6 +23,21 @@ whc.height = 180.0;
 whc.weight = 140.0;
 whc.isDeveloper = YES;
 whc.sex = 'm';
+
+// 嵌套car对象
+whc.car = [Car new];
+whc.car.name = @"撼路者";
+whc.car.brand = @"大路虎";
+
+// 嵌套school对象
+whc.school = [School new];
+whc.school.name = @"北京大学";
+whc.school.personCount = 5000;
+
+// school对象嵌套city对象
+whc.school.city = [City new];
+whc.school.city.name = @"北京";
+whc.school.city.personCount = 1000;
 
 [WHC_ModelSqlite insert:whc];
 ```
@@ -67,4 +86,7 @@ NSArray * personArray = [WHC_ModelSqlite query:[Person class] where:@"name = '�
 ```objective-c
 NSString * path = [WHC_ModelSqlite localPathWithModel:[Person class]];
 ```
-
+####11.获取数据库本地版本号演示
+```objective-c
+NSString * path = [WHC_ModelSqlite versionWithModel:[Person class]];
+```

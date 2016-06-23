@@ -1,8 +1,8 @@
 //
-//  AppDelegate.h
+//  City.m
 //  WHC_ModelSqliteKit
 //
-//  Created by admin on 16/5/29.
+//  Created by WHC on 16/6/21.
 //  Copyright © 2016年 WHC. All rights reserved.
 //
 
@@ -27,12 +27,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#import <UIKit/UIKit.h>
+#import "City.h"
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@implementation City
 
-@property (strong, nonatomic) UIWindow *window;
-
++ (NSString *)VERSION {
+    return @"1.0";
+}
 
 @end
-
