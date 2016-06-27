@@ -190,7 +190,8 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
             }else if (class_type == [NSArray class] ||
                       class_type == [NSDictionary class] ||
                       class_type == [NSData class] ||
-                      class_type == [NSDate class]){
+                      class_type == [NSDate class] ||
+                      class_type == [NSSet class] ){
                 NSLog(@"异常数据类型");
             }else {
                 WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_Int propertyName:property_name_string];
@@ -793,21 +794,20 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
         }];
         if (sub_model_name.length > 0) {
             [sub_model_name deleteCharactersInRange:NSMakeRange(sub_model_name.length - 1, 1)];
-            NSArray * model_array = [self commonQuery:model_class where:where subModelName:sub_model_name];
-            NSArray * sub_model_name_array = sub_model_class_info.allValues;
-            NSArray * sub_model_class_array = sub_model_class_info.allKeys;
-            if (sub_model_name_array.count > 0) {
-                [model_array enumerateObjectsUsingBlock:^(NSObject * model, NSUInteger idx, BOOL * _Nonnull stop) {
-                    [sub_model_name_array enumerateObjectsUsingBlock:^(NSString * name, NSUInteger idx, BOOL * _Nonnull stop) {
-                        Class sub_model_class = NSClassFromString(sub_model_class_array[[sub_model_name_array indexOfObject:name]]);
-                        id sub_model = [self querySubModel:sub_model_class where:[NSString stringWithFormat:@"_id = %ld",[[model valueForKey:name] integerValue]]];
-                        [model setValue:sub_model forKey:name];
-                    }];
-                }];
-            }
-            return model_array;
         }
-        return @[];
+        NSArray * model_array = [self commonQuery:model_class where:where subModelName:sub_model_name];
+        NSArray * sub_model_name_array = sub_model_class_info.allValues;
+        NSArray * sub_model_class_array = sub_model_class_info.allKeys;
+        if (sub_model_name_array.count > 0) {
+            [model_array enumerateObjectsUsingBlock:^(NSObject * model, NSUInteger idx, BOOL * _Nonnull stop) {
+                [sub_model_name_array enumerateObjectsUsingBlock:^(NSString * name, NSUInteger idx, BOOL * _Nonnull stop) {
+                    Class sub_model_class = NSClassFromString(sub_model_class_array[[sub_model_name_array indexOfObject:name]]);
+                    id sub_model = [self querySubModel:sub_model_class where:[NSString stringWithFormat:@"_id = %ld",[[model valueForKey:name] integerValue]]];
+                    [model setValue:sub_model forKey:name];
+                }];
+            }];
+        }
+        return model_array;
     }
 }
 

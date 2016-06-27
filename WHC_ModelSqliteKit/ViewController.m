@@ -39,7 +39,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
     _detailLabel.text = @"开发者:WHC(吴海超)\n\n专业的数据存储解决方案\n\n由于本开源库主要针对数据存储解决方案所以没有UI演示\n\n测试者可以通过ViewController里测试用例进行断点查看\n\n觉得不错请给予star支持,谢谢";
     
     [WHC_ModelSqlite removeAllModel];
