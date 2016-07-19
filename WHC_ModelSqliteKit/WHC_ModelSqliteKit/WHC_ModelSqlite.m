@@ -26,7 +26,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// VERSION:(2.0)
+// VERSION:(2.1)
 
 #import "WHC_ModelSqlite.h"
 #import <objc/runtime.h>
@@ -47,7 +47,8 @@ typedef NS_OPTIONS(NSInteger, WHC_FieldType) {
     _Boolean    =      1 << 2,
     _Double     =      1 << 3,
     _Float      =      1 << 4,
-    _Char       =      1 << 5
+    _Char       =      1 << 5,
+    _Number     =      1 << 6
 };
 
 static sqlite3 * _whc_database;
@@ -148,6 +149,8 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
             return WHC_String;
         case _Int:
             return WHC_Int;
+        case _Number:
+            return WHC_Double;
         case _Double:
             return WHC_Double;
         case _Float:
@@ -182,7 +185,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
             // refernece type
             Class class_type = NSClassFromString(property_attributes_list[1]);
             if (class_type == [NSNumber class]) {
-                WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_Int propertyName:property_name_string];
+                WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_Number propertyName:property_name_string];
                 [fields setObject:property_info forKey:property_name_string];
             }else if (class_type == [NSString class]) {
                 WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_String propertyName:property_name_string];
@@ -194,7 +197,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                       class_type == [NSSet class] ){
                 NSLog(@"异常数据类型");
             }else {
-                WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_Int propertyName:property_name_string];
+                WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_Number propertyName:property_name_string];
                 [fields setObject:property_info forKey:property_name_string];
             }
         }
@@ -326,6 +329,11 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                             WHC_PropertyInfo * property_info = new_model_info[old_field_name];
                             if (property_info == nil) continue;
                             switch (property_info.type) {
+                                case _Number: {
+                                    double value = sqlite3_column_double(pp_stmt, column);
+                                    [new_model_object setValue:@(value) forKey:old_field_name];
+                                }
+                                    break;
                                 case _Int: {
                                     sqlite3_int64 value = sqlite3_column_int64(pp_stmt, column);
                                     if (sub_model_name != nil && sub_model_name.length > 0) {
@@ -438,6 +446,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                     break;
                 case _Float:
                 case _Double:
+                case _Number:
                     create_table_sql = [create_table_sql stringByAppendingString:@"0.0,"];
                     break;
                 default:
@@ -472,6 +481,10 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
             switch (property_info.type) {
                 case _String:
                     [value_array addObject:@""];
+                    break;
+                case _Number: {
+                    [value_array addObject:@(0.0)];
+                }
                     break;
                 case _Int: {
                     id sub_model_main_key_object = [self shareInstance].sub_model_info[property_info.name];
@@ -520,6 +533,9 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
         switch (property_info.type) {
             case _String:
                 insert_sql = [insert_sql stringByAppendingFormat:@"'%@',",value];
+                break;
+            case _Number:
+                insert_sql = [insert_sql stringByAppendingFormat:@"%f,",[value doubleValue]];
                 break;
             case _Int:
                 insert_sql = [insert_sql stringByAppendingFormat:@"%ld,",(long)[value integerValue]];
@@ -666,6 +682,11 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                     case _String: {
                         NSString * value = [NSString stringWithCString:(const char *)sqlite3_column_text(pp_stmt, column) encoding:NSUTF8StringEncoding];
                         [model_object setValue:value forKey:field_name];
+                    }
+                        break;
+                    case _Number: {
+                        double value = sqlite3_column_double(pp_stmt, column);
+                        [model_object setValue:@(value) forKey:field_name];
                     }
                         break;
                     case _Int: {
@@ -829,6 +850,14 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                     value = @"";
                 }
                 update_sql = [update_sql stringByAppendingFormat:@"%@ = '%@',",field,value];
+            }
+                break;
+            case _Number: {
+                NSNumber * value = [sub_model_object valueForKey:field];
+                if (value == nil) {
+                    value = @(0.0);
+                }
+                update_sql = [update_sql stringByAppendingFormat:@"%@ = %@,",field,value];
             }
                 break;
             case _Int: {

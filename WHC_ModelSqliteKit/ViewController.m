@@ -51,6 +51,7 @@
     person.weight = 140.0;
     person.isDeveloper = YES;
     person.sex = 'm';
+    person.zz = @(100);
     person.type = @"android";
     
     person.car = [Car new];
@@ -198,6 +199,7 @@
         person.isDeveloper = YES;
         person.sex = 'm';
         person.type = @"ios";
+        person.zz = @(i + 100);
         
         person.car = [Car new];
         person.car.name = [NSString stringWithFormat:@"撼路者--%d",i];
