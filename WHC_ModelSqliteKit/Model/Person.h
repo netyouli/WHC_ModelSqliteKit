@@ -45,5 +45,6 @@
 @property (nonatomic, strong) Car * car;
 @property (nonatomic, strong) School * school;
 @property (nonatomic, strong) NSNumber * zz;
+@property (nonatomic, strong) NSData * data;
 + (NSString *)VERSION;
 @end

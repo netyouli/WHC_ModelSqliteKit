@@ -24,17 +24,27 @@
                                 <color key="textColor" red="0.99062499999999998" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ye5-KL-qrg">
+                                <rect key="frame" x="180" y="28" width="240" height="128"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="240" id="CZ6-Vp-thK"/>
+                                    <constraint firstAttribute="height" constant="128" id="vuZ-oY-54R"/>
+                                </constraints>
+                            </imageView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="i9R-Ug-iQu" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="7hi-cd-pvJ"/>
                             <constraint firstAttribute="trailingMargin" secondItem="i9R-Ug-iQu" secondAttribute="trailing" id="eEJ-x8-QEy"/>
+                            <constraint firstItem="ye5-KL-qrg" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="noz-iV-ycq"/>
+                            <constraint firstItem="ye5-KL-qrg" firstAttribute="top" secondItem="i9R-Ug-iQu" secondAttribute="top" id="nu1-dR-18Y"/>
                             <constraint firstItem="i9R-Ug-iQu" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="wGt-oU-wg3"/>
                             <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="i9R-Ug-iQu" secondAttribute="bottom" id="yum-9B-QxX"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="detailLabel" destination="i9R-Ug-iQu" id="7JF-NS-FWW"/>
+                        <outlet property="imageView" destination="ye5-KL-qrg" id="YVe-Qr-Whu"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>

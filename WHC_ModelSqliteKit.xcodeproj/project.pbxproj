@@ -17,6 +17,7 @@
 		84748B111CF9FD4C00139F82 /* libsqlite3.0.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 84748B101CF9FD4C00139F82 /* libsqlite3.0.tbd */; };
 		84748B131CFA25A400139F82 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 84748B121CFA25A400139F82 /* README.md */; };
 		84748B151CFA310B00139F82 /* WHC_ModelSqliteKit.podspec in Resources */ = {isa = PBXBuildFile; fileRef = 84748B141CFA310B00139F82 /* WHC_ModelSqliteKit.podspec */; };
+		FE050C331D4F49D90029B4A3 /* image.png in Resources */ = {isa = PBXBuildFile; fileRef = FE050C321D4F49D90029B4A3 /* image.png */; };
 		FEFFE3311D1B9FC800DF0865 /* Car.m in Sources */ = {isa = PBXBuildFile; fileRef = FEFFE32A1D1B9FC800DF0865 /* Car.m */; };
 		FEFFE3321D1B9FC800DF0865 /* City.m in Sources */ = {isa = PBXBuildFile; fileRef = FEFFE32C1D1B9FC800DF0865 /* City.m */; };
 		FEFFE3331D1B9FC800DF0865 /* Person.m in Sources */ = {isa = PBXBuildFile; fileRef = FEFFE32E1D1B9FC800DF0865 /* Person.m */; };
@@ -39,6 +40,7 @@
 		84748B101CF9FD4C00139F82 /* libsqlite3.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
 		84748B121CFA25A400139F82 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		84748B141CFA310B00139F82 /* WHC_ModelSqliteKit.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = WHC_ModelSqliteKit.podspec; sourceTree = "<group>"; };
+		FE050C321D4F49D90029B4A3 /* image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = image.png; sourceTree = "<group>"; };
 		FEFFE3291D1B9FC800DF0865 /* Car.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Car.h; sourceTree = "<group>"; };
 		FEFFE32A1D1B9FC800DF0865 /* Car.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Car.m; sourceTree = "<group>"; };
 		FEFFE32B1D1B9FC800DF0865 /* City.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = City.h; sourceTree = "<group>"; };
@@ -118,6 +120,7 @@
 		FEFFE3281D1B9FC800DF0865 /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				FE050C321D4F49D90029B4A3 /* image.png */,
 				FEFFE3291D1B9FC800DF0865 /* Car.h */,
 				FEFFE32A1D1B9FC800DF0865 /* Car.m */,
 				FEFFE32B1D1B9FC800DF0865 /* City.h */,
@@ -191,6 +194,7 @@
 				84748B021CF9FC4000139F82 /* Assets.xcassets in Resources */,
 				84748B151CFA310B00139F82 /* WHC_ModelSqliteKit.podspec in Resources */,
 				84748B001CF9FC4000139F82 /* Main.storyboard in Resources */,
+				FE050C331D4F49D90029B4A3 /* image.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

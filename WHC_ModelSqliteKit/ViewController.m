@@ -33,6 +33,7 @@
 
 @interface ViewController ()
 @property (nonatomic, weak)IBOutlet UILabel * detailLabel;
+@property (nonatomic, weak)IBOutlet UIImageView * imageView;
 @end
 
 @implementation ViewController
@@ -53,6 +54,9 @@
     person.sex = 'm';
     person.zz = @(100);
     person.type = @"android";
+    
+    /// 存储图片
+    person.data = UIImagePNGRepresentation([UIImage imageNamed:@"image"]);
     
     person.car = [Car new];
     person.car.name = @"撼路者";
@@ -91,6 +95,7 @@
         NSLog(@"isDeveloper = %d",person.isDeveloper);
         NSLog(@"sex = %c",person.sex);
         NSLog(@"---------------------------------");
+        self.imageView.image = [UIImage imageWithData:person.data];
     }];
     
     /// 2.批量存储模型对象到数据库演示代码
@@ -114,10 +119,13 @@
         NSLog(@"---------------------------------");
     }];
     
+    /// 2.2 新增查询排序api(查询结果按age字段进行递减排序)
+    personArray = [WHC_ModelSqlite query:[Person class] order:@"by age desc"];
+    
     /// 2.2 条件查询存储的模型对象演示代码
     
     personArray = [WHC_ModelSqlite query:[Person class]
-                                   where:@"age > 20"];
+                                   where:@"age > 30"];
     [personArray enumerateObjectsUsingBlock:^(Person *  _Nonnull person, NSUInteger idx, BOOL * _Nonnull stop) {
         NSLog(@"第%lu条数据",(unsigned long)idx);
         NSLog(@"name = %@",person.name);
@@ -132,7 +140,7 @@
     /// 3.修改存储模型对象演示代码
     
     [WHC_ModelSqlite update:person
-                      where:@"name = '吴海超2' OR age <= 18"];
+                      where:@"name = '吴海超--2' OR age <= 18"];
     NSLog(@"修改批量模型对象成功");
     
     /// 3.1 查询刚刚修改是否成功示例代码
@@ -169,18 +177,18 @@
         NSLog(@"---------------------------------");
     }];
     
-    /// 5.1 清空数据库
-    [WHC_ModelSqlite clear:[Person class]];
-    
-    /// 9.1 获取数据库版本号
-    NSString * version = [WHC_ModelSqlite versionWithModel:[Person class]];
-    NSLog(@"version = %@",version);
-    
-    /// 6.1 删除数据库
-    [WHC_ModelSqlite removeModel:[Person class]];
-    
-    /// 7.1删除本地所有数据库
-    [WHC_ModelSqlite removeAllModel];
+//    /// 5.1 清空数据库
+//    [WHC_ModelSqlite clear:[Person class]];
+//    
+//    /// 9.1 获取数据库版本号
+//    NSString * version = [WHC_ModelSqlite versionWithModel:[Person class]];
+//    NSLog(@"version = %@",version);
+//    
+//    /// 6.1 删除数据库
+//    [WHC_ModelSqlite removeModel:[Person class]];
+//    
+//    /// 7.1删除本地所有数据库
+//    [WHC_ModelSqlite removeAllModel];
     
     /// 8.1 获取数据库本地路径
     NSString * path = [WHC_ModelSqlite localPathWithModel:[Person class]];
@@ -200,6 +208,8 @@
         person.sex = 'm';
         person.type = @"ios";
         person.zz = @(i + 100);
+        
+        person.data = UIImagePNGRepresentation([UIImage imageNamed:@"image"]);
         
         person.car = [Car new];
         person.car.name = [NSString stringWithFormat:@"撼路者--%d",i];
