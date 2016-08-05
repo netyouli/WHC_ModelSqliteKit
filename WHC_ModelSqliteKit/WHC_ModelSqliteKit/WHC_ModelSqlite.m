@@ -547,7 +547,11 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                     if ([subModelKeyId isKindOfClass:[NSArray class]]) {
                         [value_array addObject:subModelKeyId[index]];
                     }else {
-                        [value_array addObject:subModelKeyId];
+                        if (subModelKeyId) {
+                            [value_array addObject:subModelKeyId];
+                        }else {
+                            [value_array addObject:@(_NO_HANDLE_KEY_ID)];
+                        }
                     }
                 }
                     break;
@@ -616,6 +620,8 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                     sqlite3_bind_double(pp_stmt, index, [value doubleValue]);
                     break;
                 case _Model:
+                    sqlite3_bind_int64(pp_stmt, index, (sqlite3_int64)[value integerValue]);
+                    break;
                 case _Int:
                     sqlite3_bind_int64(pp_stmt, index, (sqlite3_int64)[value integerValue]);
                     break;

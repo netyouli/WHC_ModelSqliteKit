@@ -58,9 +58,9 @@
     /// 存储图片
     person.data = UIImagePNGRepresentation([UIImage imageNamed:@"image"]);
     
-    person.car = [Car new];
-    person.car.name = @"撼路者";
-    person.car.brand = @"大路虎";
+//    person.car = [Car new];
+//    person.car.name = @"撼路者";
+//    person.car.brand = @"大路虎";
     
     person.school = [School new];
     person.school.name = @"北京大学";
