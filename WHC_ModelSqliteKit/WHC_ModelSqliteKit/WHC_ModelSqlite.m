@@ -532,7 +532,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
         }else {
             switch (property_info.type) {
                 case _Data: {
-                    [value addObject:[NSData data]];
+                    [value_array addObject:[NSData data]];
                 }
                     break;
                 case _String: {
