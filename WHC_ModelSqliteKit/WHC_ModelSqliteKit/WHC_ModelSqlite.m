@@ -251,7 +251,10 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                 if (isClass) {
                     [sub_model_info setObject:property_attributes_list[1] forKey:property_name_string];
                 }else {
-                    [sub_model_info setObject:[model valueForKey:property_name_string] forKey:property_name_string];
+                    id sub_model = [model valueForKey:property_name_string];
+                    if (sub_model) {
+                        [sub_model_info setObject:sub_model forKey:property_name_string];
+                    }
                 }
             }
         }
