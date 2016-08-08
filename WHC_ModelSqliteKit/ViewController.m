@@ -179,7 +179,7 @@
     
 //    /// 5.1 清空数据库
 //    [WHC_ModelSqlite clear:[Person class]];
-//    
+//
 //    /// 9.1 获取数据库版本号
 //    NSString * version = [WHC_ModelSqlite versionWithModel:[Person class]];
 //    NSLog(@"version = %@",version);

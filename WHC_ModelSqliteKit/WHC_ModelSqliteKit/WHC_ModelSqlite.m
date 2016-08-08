@@ -1164,9 +1164,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
 }
 
 + (void)clear:(Class)model_class {
-    dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
     [self delete:model_class where:nil];
-    dispatch_semaphore_signal([self shareInstance].dsema);
 }
 
 + (BOOL)commonDeleteModel:(Class)model_class where:(NSString *)where {
@@ -1196,8 +1194,11 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                     }];
                 }];
             }
+        }else {
+            goto DELETE;
         }
     }else {
+    DELETE:
         if ([self commonDeleteModel:model_class where:where]) {
             NSDictionary * sub_model_class_info = [self scanSubModelClass:model_class];
             [sub_model_class_info enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
