@@ -1016,6 +1016,10 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     return model_array;
 }
 
++ (NSArray *)query:(Class)model_class {
+    return [self query:model_class where:nil];
+}
+
 + (NSArray *)query:(Class)model_class where:(NSString *)where {
     return [self queryModel:model_class conditions:@[where == nil ? @"" : where] queryType:_Where];
 }
