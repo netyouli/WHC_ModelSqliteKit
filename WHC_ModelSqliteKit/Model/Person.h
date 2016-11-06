@@ -33,7 +33,7 @@
 
 @interface Person : NSObject
 @property (nonatomic, copy) NSString * name;
-@property (nonatomic, assign) NSInteger age;
+@property (nonatomic, assign) long age;
 @property (nonatomic, assign) float weight;
 @property (nonatomic, assign) double height;
 @property (nonatomic, assign) BOOL isDeveloper;

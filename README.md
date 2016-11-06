@@ -1,34 +1,31 @@
-# WHC_ModelSqliteKit
+WHC_ModelSqliteKit
 
-###咨询qq:712641411
-###作者：吴海超
+简介
+==============
+- **目标**: 替代直接使用Sqlite和CoreData
+- **架构**: 采用runtime技术和Sqlite Api完美结合打造
+- **易用**: 告别繁琐sql语句的编写和CoreData复杂创建
+- **支持**: (NSData,NSString,Int,double,float,Bool,char,NSNumber)
+- **强大**: 支持模型嵌套模型类存储到数据库和多表嵌套联查
+- **智能**: 智能根据数据库模型类提供的VERSION方法更新数据库字段(动态删除/添加)
+- **咨询**: 712641411
+- **作者**: 吴海超
 
-#####VERSION 2.2.1
+要求
+==============
+* iOS 5.0 or later
+* Xcode 6.0 or later
 
-##### 1.专业数据模型存储解决方案(告别直接使用sqlite和coreData)
-##### 2.告别繁琐sql语句的编写
-##### 3.告别coreData复杂繁琐创建
-##### 4.WHC_ModelSqliteKit采用运行时技术动态识别模型属性信息智能创建和编辑数据库
-##### 5.目前支持字段存储类型(NSData,NSString,Int,double,float,Bool,char,NSNumber)
-##### 6.直接淘汰FMDB开源库
-### 7.支持模型嵌套模型类存储到数据库，多表嵌套联查
-### 8.智能根据模型属性名称类型更新模型数据库表里字段(动态添加字段和删除字段)
-### 9.告别数据库字段变更带来的烦恼
 
-##### Note1：修改(增加/删除)数据表字段时候请先修改模型类+(NSString *)VERSION方法里版本号
-##### Note2：页面最后有详细的Api文档
+集成
+==============
+* 使用CocoaPods:
+-  pod 'WHC_ModelSqlite', '~> 1.0.0'
+* 手工集成:
+-  导入文件夹WHC_ModelSqliteKit
 
-###升级更新日志
-##### 1.不好意思光专注模型嵌套模型查询解决方案，忘了但模型查询，已经修复了单模型查询不到数据的bug。
-##### 2.修复了NSNumber属性查询时的错误bug。
-##### 3.支持NSData类型存取(可以存图片)
-##### 4.修复若干潜在bug，提升稳定性。
-##### 5.增加查询排序和限制查询条数功能。
-##### 6.重构查询架构
-##### 7.修复嵌套存储子模型类对象为nil时崩溃bug
-##### 8.修复删除单模型记录失败bug和clear多线程死锁bug
-##### 9.增加query系列方法
-
+用法
+==============
 ####1.存储嵌套模型对象到数据库演示
 ```objective-c
 Person * whc = [Person new];
@@ -122,7 +119,14 @@ NSString * path = [WHC_ModelSqlite localPathWithModel:[Person class]];
 NSString * path = [WHC_ModelSqlite versionWithModel:[Person class]];
 ```
 
-###14.Api文档
+## <a id="期待"></a>期待
+
+- 如果您在使用过程中有任何问题，欢迎issue me! 很乐意为您解答任何相关问题!
+- 与其给我点star，不如向我狠狠地抛来一个BUG！
+- 如果您想要更多的接口来自定义或者建议/意见，欢迎issue me！我会根据大家的需求提供更多的接口！
+
+Api文档
+==============
 ```objective-c
 /**
 * 说明: 存储模型数组到本地(事务方式)
@@ -284,5 +288,6 @@ NSString * path = [WHC_ModelSqlite versionWithModel:[Person class]];
 */
 + (NSString *)versionWithModel:(Class)model_class;
 
-
 ```
+## Licenses
+All source code is licensed under the MIT License.
