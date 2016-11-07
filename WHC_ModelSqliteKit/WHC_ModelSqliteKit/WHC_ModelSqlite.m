@@ -26,7 +26,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// VERSION:(2.2.1)
+// VERSION:(1.1.1)
 
 #import "WHC_ModelSqlite.h"
 #import <objc/runtime.h>
