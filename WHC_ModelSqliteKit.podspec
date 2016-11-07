@@ -15,7 +15,7 @@ s.platform     = :ios, "6.0"
 
 s.source       = { :git => "https://github.com/netyouli/WHC_ModelSqliteKit.git", :tag => "1.0.0"}
 
-s.source_files  = "WHC_ModelSqliteKit/*.{h,m}"
+s.source_files  = "WHC_ModelSqliteKit/WHC_ModelSqliteKit/*.{h,m}"
 s.libraries      = 'sqlite3.0'
 
 # s.public_header_files = "Classes/**/*.h"
