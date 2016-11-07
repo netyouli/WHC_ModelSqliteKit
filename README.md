@@ -1,11 +1,10 @@
 WHC_ModelSqliteKit
-
 简介
 ==============
 - **目标**: 替代直接使用Sqlite和CoreData
 - **架构**: 采用runtime技术和Sqlite Api完美结合打造
 - **易用**: 告别繁琐sql语句的编写和CoreData复杂创建
-- **支持**: (NSData,NSString,Int,double,float,Bool,char,NSNumber)
+- **支持**: (NSData,NSString,Int,double,float,Bool,char,NSNumber)类型
 - **强大**: 支持模型嵌套模型类存储到数据库和多表嵌套联查
 - **智能**: 智能根据数据库模型类提供的VERSION方法更新数据库字段(动态删除/添加)
 - **咨询**: 712641411
@@ -14,7 +13,7 @@ WHC_ModelSqliteKit
 要求
 ==============
 * iOS 5.0 or later
-* Xcode 6.0 or later
+* Xcode 8.0 or later
 
 
 集成
