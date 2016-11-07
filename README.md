@@ -1,4 +1,9 @@
 WHC_ModelSqliteKit
+==============
+![Build Status](https://api.travis-ci.org/netyouli/WHC_ModelSqliteKit.svg?branch=master)
+[![Pod Version](http://img.shields.io/cocoapods/v/WHC_ModelSqliteKit.svg?style=flat)](http://cocoadocs.org/docsets/WHC_ModelSqliteKit/)
+[![Pod Platform](http://img.shields.io/cocoapods/p/WHC_ModelSqliteKit.svg?style=flat)](http://cocoadocs.org/docsets/WHC_ModelSqliteKit/)
+[![Pod License](http://img.shields.io/cocoapods/l/WHC_ModelSqliteKit.svg?style=flat)](https://opensource.org/licenses/MIT)
 简介
 ==============
 - **目标**: 替代直接使用Sqlite和CoreData
