@@ -985,7 +985,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     if (model != nil) {
         [sub_model_class_info enumerateKeysAndObjectsUsingBlock:^(NSString * name, NSString * obj, BOOL * _Nonnull stop) {
             Class sub_model_class = NSClassFromString(obj);
-            id sub_model = [self querySubModel:sub_model_class conditions:@[[NSString stringWithFormat:@"_id = %ld",[[model valueForKey:name] integerValue]]] queryType:_Where];
+            id sub_model = [self querySubModel:sub_model_class conditions:@[[NSString stringWithFormat:@"_id = %d",[[model valueForKey:name] intValue]]] queryType:_Where];
             [model setValue:sub_model forKey:name];
         }];
     }
@@ -1008,7 +1008,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     [model_array enumerateObjectsUsingBlock:^(NSObject * model, NSUInteger idx, BOOL * _Nonnull stop) {
         [sub_model_class_info enumerateKeysAndObjectsUsingBlock:^(NSString * name, NSString * obj, BOOL * _Nonnull stop) {
             Class sub_model_class = NSClassFromString(obj);
-            id sub_model = [self querySubModel:sub_model_class conditions:@[[NSString stringWithFormat:@"_id = %ld",[[model valueForKey:name] integerValue]]] queryType:_Where];
+            id sub_model = [self querySubModel:sub_model_class conditions:@[[NSString stringWithFormat:@"_id = %d",[[model valueForKey:name] intValue]]] queryType:_Where];
             [model setValue:sub_model forKey:name];
         }];
     }];
