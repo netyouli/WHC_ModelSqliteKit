@@ -216,7 +216,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                       class_type == [NSDictionary class] ||
                       class_type == [NSDate class] ||
                       class_type == [NSSet class] ){
-                NSLog(@"异常数据类型");
+                [self log:@"检查模型类异常数据类型"];
             }else {
                 WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_Model propertyName:property_name_string];
                 [fields setObject:property_info forKey:property_name_string];
@@ -645,7 +645,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
             sqlite3_finalize(pp_stmt);
         }
     }else {
-        NSLog(@"存储数据失败");
+        [self log:@"Sorry存储数据失败,建议检查模型类属性类型是否符合规范"];
     }
 }
 
@@ -697,7 +697,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     return [self commonInsertSubArrayModelObject:model_array];
 }
 
-+ (void)insertArray:(NSArray *)model_array {
++ (void)inserts:(NSArray *)model_array {
     dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
     @autoreleasepool {
         [[self shareInstance].sub_model_info removeAllObjects];
@@ -919,7 +919,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
             [model_object_array addObject:model_object];
         }
     }else {
-        NSLog(@"查询语句异常");
+        [self log:@"Sorry查询语句异常,建议检查查询条件Sql语句语法是否正确"];
     }
     sqlite3_finalize(pp_stmt);
     [self close];
@@ -957,7 +957,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                     [model_object_array addObject:sub_model_id_info];
                 }
             }else {
-                NSLog(@"查询语句异常");
+                [self log:@"Sorry查询语句异常,建议先检查Where条件sql语句语法是否正确"];
             }
             sqlite3_finalize(pp_stmt);
             [self close];
@@ -1240,7 +1240,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                 if (![file isEqualToString:@".DS_Store"]) {
                     NSString * file_path = [NSString stringWithFormat:@"%@%@",cache_path,file];
                     [file_manager removeItemAtPath:file_path error:nil];
-                    NSLog(@"delete ->%@",file_path);
+                    [self log:[NSString stringWithFormat:@"已经删除了数据库 ->%@",file_path]];
                 }
             }];
         }
@@ -1320,5 +1320,8 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     return model_version;
 }
 
++ (void)log:(NSString *)msg {
+    NSLog(@"WHC_ModelSqlite:[%@]",msg);
+}
 
 @end

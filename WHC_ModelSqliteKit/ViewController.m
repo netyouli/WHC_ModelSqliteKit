@@ -103,7 +103,7 @@
     /// 2.批量存储模型对象到数据库演示代码
     
     NSArray * persons = [self makeArrayPerson];
-    [WHC_ModelSqlite insertArray:persons];
+    [WHC_ModelSqlite inserts:persons];
     NSLog(@"2.批量存储模型对象到数据库演示代码");
     
     /// 2.1 查询上面存储的模型对象演示代码

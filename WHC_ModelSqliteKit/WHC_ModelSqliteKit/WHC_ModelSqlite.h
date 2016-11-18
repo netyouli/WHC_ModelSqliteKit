@@ -37,7 +37,7 @@
  * @param model_array 模型数组对象(model_array 里对象类型要一致)
  */
 
-+ (void)insertArray:(NSArray *)model_array;
++ (void)inserts:(NSArray *)model_array;
 
 /**
  * 说明: 存储模型到本地

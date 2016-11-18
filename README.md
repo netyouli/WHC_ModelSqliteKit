@@ -24,7 +24,7 @@ WHC_ModelSqliteKit
 集成
 ==============
 * 使用CocoaPods:
--  pod 'WHC_ModelSqlite', '~> 1.1.1'
+-  pod 'WHC_ModelSqlite', '~> 1.1.2'
 * 手工集成:
 -  导入文件夹WHC_ModelSqliteKit
 
@@ -122,6 +122,9 @@ NSString * path = [WHC_ModelSqlite localPathWithModel:[Person class]];
 ```objective-c
 NSString * path = [WHC_ModelSqlite versionWithModel:[Person class]];
 ```
+
+## <a id="注意"></a>期待
+- 当模型类有新增/删除属性的时候需要在模型类里定义类方法(+ (NSString*)VERSION)修改模型类(数据库)版本号来表明有字段更新操作，库会根据这个VERSION变更智能检查并自动更新数据库字段，无需手动更新数据库字段
 
 ## <a id="期待"></a>期待
 
