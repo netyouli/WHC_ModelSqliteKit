@@ -623,7 +623,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                     sqlite3_bind_int64(pp_stmt, index, (sqlite3_int64)[value integerValue]);
                     break;
                 case _Int:
-                    sqlite3_bind_int64(pp_stmt, index, (sqlite3_int64)[value integerValue]);
+                    sqlite3_bind_int64(pp_stmt, index, (sqlite3_int64)[value longLongValue]);
                     break;
                 case _Boolean:
                     sqlite3_bind_int(pp_stmt, index, [value boolValue]);
