@@ -24,7 +24,7 @@ WHC_ModelSqliteKit
 集成
 ==============
 * 使用CocoaPods:
--  pod 'WHC_ModelSqlite', '~> 1.1.2'
+-  pod 'WHC_ModelSqlite', '~> 1.1.3'
 * 手工集成:
 -  导入文件夹WHC_ModelSqliteKit
 

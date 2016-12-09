@@ -26,7 +26,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// VERSION:(1.1.1)
+// VERSION:(1.1.3)
 
 #import "WHC_ModelSqlite.h"
 #import <objc/runtime.h>
@@ -1110,8 +1110,10 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                 case _Int: {
                     if (sub_model_name &&
                         [sub_model_name rangeOfString:field].location != NSNotFound){} else {
-                        int64_t value = ((int64_t (*)(id, SEL))(void *) objc_msgSend)((id)sub_model_object, property_info.getter);
-                        sqlite3_bind_int64(pp_stmt, index, (sqlite3_int64)value);
+                        /* 32bit os type issue
+                         long value = ((long (*)(id, SEL))(void *) objc_msgSend)((id)sub_model_object, property_info.getter);*/
+                        NSNumber * value = [sub_model_object valueForKey:field];
+                        sqlite3_bind_int64(pp_stmt, index, (sqlite3_int64)[value longLongValue]);
                     }
                 }
                     break;
