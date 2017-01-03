@@ -164,6 +164,7 @@
 				TargetAttributes = {
 					84748AF11CF9FC4000139F82 = {
 						CreatedOnToolsVersion = 7.3.1;
+						DevelopmentTeam = 7F5YZXGNJ3;
 					};
 				};
 			};
@@ -325,6 +326,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 7F5YZXGNJ3;
 				INFOPLIST_FILE = WHC_ModelSqliteKit/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -337,6 +339,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 7F5YZXGNJ3;
 				INFOPLIST_FILE = WHC_ModelSqliteKit/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";

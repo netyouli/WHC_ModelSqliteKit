@@ -142,7 +142,7 @@
     /// 3.修改存储模型对象演示代码
     
     [WHC_ModelSqlite update:person
-                      where:@"name = '吴海超--2' OR age <= 18"];
+                      where:@"name = '吴超1000' OR age >= 1000"];
     NSLog(@"修改批量模型对象成功");
     
     /// 3.1 查询刚刚修改是否成功示例代码

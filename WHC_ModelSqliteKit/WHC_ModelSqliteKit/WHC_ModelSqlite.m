@@ -1143,6 +1143,8 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
         }];
         sqlite3_step(pp_stmt);
         sqlite3_finalize(pp_stmt);
+    }else {
+        NSLog(@"更新失败");
     }
     [self close];
 }
