@@ -26,7 +26,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// VERSION:(1.1.3)
+// VERSION:(1.1.4)
 
 #import "WHC_ModelSqlite.h"
 #import <objc/runtime.h>
@@ -215,7 +215,8 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
             } else if (class_type == [NSArray class] ||
                       class_type == [NSDictionary class] ||
                       class_type == [NSDate class] ||
-                      class_type == [NSSet class] ){
+                      class_type == [NSSet class] ||
+                      class_type == [NSValue class]) {
                 [self log:@"检查模型类异常数据类型"];
             }else {
                 WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_Model propertyName:property_name_string];
@@ -247,7 +248,8 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                 class_type != [NSSet class] &&
                 class_type != [NSData class] &&
                 class_type != [NSDate class] &&
-                class_type != [NSDictionary class]) {
+                class_type != [NSDictionary class] &&
+                class_type != [NSValue class]) {
                 if (isClass) {
                     [sub_model_info setObject:property_attributes_list[1] forKey:property_name_string];
                 }else {
@@ -701,10 +703,9 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
     @autoreleasepool {
         [[self shareInstance].sub_model_info removeAllObjects];
-        if (!(model_array != nil && model_array.count > 0)) {
-            return;
+        if (model_array != nil && model_array.count > 0) {
+            [self inserSubModelArray:model_array];
         }
-        [self inserSubModelArray:model_array];
     }
     dispatch_semaphore_signal([self shareInstance].dsema);
 }
