@@ -11,7 +11,7 @@ WHC_ModelSqliteKit
 - **易用**: 告别繁琐sql语句的编写和CoreData复杂创建
 - **支持**: (NSData,NSString,Int,double,float,Bool,char,NSNumber)类型
 - **强大**: 支持模型嵌套模型类存储到数据库和多表嵌套联查
-- **智能**: 智能根据数据库模型类提供的VERSION方法更新数据库字段(动态删除/添加)
+- **智能**: 根据数据库模型类提供的VERSION方法返回的版本号来智能更新数据库字段(动态删除/添加)
 - **咨询**: 712641411
 - **作者**: 吴海超
 
@@ -24,7 +24,7 @@ WHC_ModelSqliteKit
 集成
 ==============
 * 使用CocoaPods:
--  pod 'WHC_ModelSqlite', '~> 1.1.3'
+-  pod 'WHC_ModelSqlite', '~> 1.1.4'
 * 手工集成:
 -  导入文件夹WHC_ModelSqliteKit
 
