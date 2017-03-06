@@ -12,6 +12,7 @@ WHC_ModelSqliteKit
 简介
 ==============
 - **架构**: 采用runtime和Sqlite完美结合打造的强大数据库操作引擎开源库
+- **安全**: 支持数据库级别加密
 - **易用**: 真正实现一行代码操作数据库
 - **目标**: 替代直接使用Sqlite和CoreData以及FMDB低效率方式
 - **支持**: (NSArray,NSDictionary,NSDate,NSData,NSString,NSNumber,Int,double,float,Bool,char)类型
