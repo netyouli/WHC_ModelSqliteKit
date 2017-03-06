@@ -39,6 +39,7 @@ WHC_ModelSqliteKit
 注意
 ==============
 * 在需要对数据表自定义信息需要model类实现WHC_SqliteInfo协议
+- 当模型类有新增/删除属性的时候需要在模型类里定义类方法whc_SqliteVersion方法修改模型类(数据库)版本号来表明有字段更新操作，库会根据这个VERSION变更智能检查并自动更新数据库字段，无需手动更新数据库字段
 ```objective-c
 /// 数据库协议信息
 @protocol WHC_SqliteInfo <NSObject>
@@ -172,9 +173,6 @@ NSString * path = [WHC_ModelSqlite localPathWithModel:[Person class]];
 ```objective-c
 NSString * path = [WHC_ModelSqlite versionWithModel:[Person class]];
 ```
-
-## <a id="注意"></a>注意
-- 当模型类有新增/删除属性的时候需要在模型类里定义类方法(+ (NSString*)VERSION)修改模型类(数据库)版本号来表明有字段更新操作，库会根据这个VERSION变更智能检查并自动更新数据库字段，无需手动更新数据库字段
 
 ## <a id="期待"></a>期待
 
