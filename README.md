@@ -55,7 +55,7 @@ WHC_ModelSqliteKit
 ***该加密功能需要引用SQLCipher三方库才支持***
 /// 引入方式有:
 *** 手动引入 ***
-*** CocoaPods: pod 'WHC_ModelSqliteKit/SQLCipher' ***
+*** CocoaPods: pod 'WHC_ModelSqlite/SQLCipher' ***
 */
 + (NSString *)whc_SqlitePasswordKey;
 
