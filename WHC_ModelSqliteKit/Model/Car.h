@@ -27,8 +27,9 @@
 // THE SOFTWARE.
 
 #import <Foundation/Foundation.h>
+#import "NSObject+WHC_Model.h"
 
-@interface Car : NSObject
+@interface Car : NSObject<NSCoding>
 @property (nonatomic, copy) NSString * name;
 @property (nonatomic, copy) NSString * brand;
 

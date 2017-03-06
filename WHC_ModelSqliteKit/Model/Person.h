@@ -30,8 +30,9 @@
 #import <Foundation/Foundation.h>
 #import "Car.h"
 #import "School.h"
+#import "Animal.h"
 
-@interface Person : NSObject
+@interface Person : Animal
 @property (nonatomic, copy) NSString * name;
 @property (nonatomic, assign) long age;
 @property (nonatomic, assign) float weight;
@@ -46,5 +47,9 @@
 @property (nonatomic, strong) School * school;
 @property (nonatomic, strong) NSNumber * zz;
 @property (nonatomic, strong) NSData * data;
+@property (nonatomic, strong) NSArray * array;
+@property (nonatomic, strong) NSArray * carArray;
+@property (nonatomic, strong) NSDictionary * dict;
+@property (nonatomic, strong) NSDictionary * dictCar;
 + (NSString *)VERSION;
 @end

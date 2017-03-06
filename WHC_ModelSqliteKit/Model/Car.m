@@ -29,6 +29,10 @@
 #import "Car.h"
 
 @implementation Car
+
+/// 使用WHC_Model库自动实现NSCoding协议
+WHC_CodingImplementation
+
 + (NSString *)VERSION {
     return @"1.0";
 }

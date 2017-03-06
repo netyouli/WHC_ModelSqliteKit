@@ -9,5 +9,6 @@
 #import <Foundation/Foundation.h>
 
 @interface Animal : NSObject
-
+@property (nonatomic, copy) NSString * typeName;
+@property (nonatomic, assign) BOOL eat;
 @end
