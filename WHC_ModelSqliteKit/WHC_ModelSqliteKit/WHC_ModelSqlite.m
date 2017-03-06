@@ -534,7 +534,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
 }
 
 + (NSString *)exceSelector:(SEL)selector modelClass:(Class)model_class {
-    if ([model_class resolveClassMethod:selector]) {
+    if ([model_class respondsToSelector:selector]) {
         IMP sqlite_info_func = [model_class methodForSelector:selector];
         NSString * (*func)(id, SEL) = (void *)sqlite_info_func;
         return func(model_class, selector);

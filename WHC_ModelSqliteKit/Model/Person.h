@@ -51,5 +51,5 @@
 @property (nonatomic, strong) NSArray * carArray;
 @property (nonatomic, strong) NSDictionary * dict;
 @property (nonatomic, strong) NSDictionary * dictCar;
-+ (NSString *)VERSION;
++ (NSString *)whc_SqliteVersion;
 @end

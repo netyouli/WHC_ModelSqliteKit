@@ -33,5 +33,5 @@
 @interface City : NSObject
 @property (nonatomic, copy) NSString * name;
 @property (nonatomic, assign) NSInteger personCount;
-+ (NSString *)VERSION;
++ (NSString *)whc_SqliteVersion;
 @end

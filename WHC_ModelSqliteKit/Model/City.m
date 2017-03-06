@@ -31,7 +31,7 @@
 
 @implementation City
 
-+ (NSString *)VERSION {
++ (NSString *)whc_SqliteVersion {
     return @"1.0";
 }
 

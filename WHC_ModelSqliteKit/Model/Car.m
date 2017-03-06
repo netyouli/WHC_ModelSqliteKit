@@ -27,13 +27,15 @@
 // THE SOFTWARE.
 
 #import "Car.h"
+#import "WHC_ModelSqlite.h"
 
 @implementation Car
 
 /// 使用WHC_Model库自动实现NSCoding协议
 WHC_CodingImplementation
 
-+ (NSString *)VERSION {
++ (NSString *)whc_SqliteVersion {
     return @"1.0";
 }
+
 @end

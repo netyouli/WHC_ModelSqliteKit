@@ -33,5 +33,5 @@
 @property (nonatomic, copy) NSString * name;
 @property (nonatomic, copy) NSString * brand;
 
-+ (NSString *)VERSION;
++ (NSString *)whc_SqliteVersion;
 @end

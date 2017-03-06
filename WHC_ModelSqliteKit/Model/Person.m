@@ -30,7 +30,7 @@
 #import "Person.h"
 @implementation Person
 
-+ (NSString *)VERSION {
++ (NSString *)whc_SqliteVersion {
     return @"1.0.0";
 }
 @end

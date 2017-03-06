@@ -28,7 +28,7 @@
 #import "School.h"
 
 @implementation School
-+ (NSString *)VERSION {
++ (NSString *)whc_SqliteVersion {
     return @"1.0";
 }
 @end
