@@ -11,12 +11,12 @@ WHC_ModelSqliteKit
 
 简介
 ==============
-- **目标**: 替代直接使用Sqlite和CoreData
-- **架构**: 采用runtime技术和Sqlite Api完美结合打造
-- **易用**: 告别繁琐sql语句的编写和CoreData复杂创建
-- **支持**: (NSData,NSString,Int,double,float,Bool,char,NSNumber)类型
-- **强大**: 支持模型嵌套模型类存储到数据库和多表嵌套联查
-- **智能**: 根据数据库模型类提供的VERSION方法返回的版本号来智能更新数据库字段(动态删除/添加)
+- **架构**: 采用runtime和Sqlite完美结合打造的强大数据库操作引擎开源库
+- **易用**: 真正实现一行代码操作数据库
+- **目标**: 替代直接使用Sqlite和CoreData以及FMDB低效率方式
+- **支持**: (NSArray,NSDictionary,NSDate,NSData,NSString,NSNumber,Int,double,float,Bool,char)类型
+- **强大**: 支持模型嵌套继承模型类存储到数据库和多表嵌套联查
+- **智能**: 根据数据库模型类实现的WHC_SqliteInfo协议返回的版本号来智能更新数据库字段(动态删除/添加)
 - **咨询**: 712641411
 - **作者**: 吴海超
 
@@ -29,9 +29,42 @@ WHC_ModelSqliteKit
 集成
 ==============
 * 使用CocoaPods:
--  pod 'WHC_ModelSqlite', '~> 1.1.4'
+-  pod 'WHC_ModelSqlite', '~> 1.1.5'
+* 需要加密数据库使用CocoaPods:
+-  pod 'WHC_ModelSqliteKit/SQLCipher'
 * 手工集成:
 -  导入文件夹WHC_ModelSqliteKit
+
+注意
+==============
+* 在需要对数据表自定义信息需要model类实现WHC_SqliteInfo协议
+```objective-c
+/// 数据库协议信息
+@protocol WHC_SqliteInfo <NSObject>
+@optional
+/// 自定义模型类数据库版本号
+/** 注意：
+***该返回值在改变数据模型属性类型/增加/删除属性时需要更改否则无法自动更新原来模型数据表字段以及类型***
+*/
++ (NSString *)whc_SqliteVersion;
+
+/// 自定义数据库加密密码
+/** 注意：
+***该加密功能需要引用SQLCipher三方库才支持***
+/// 引入方式有:
+*** 手动引入 ***
+*** CocoaPods: pod 'WHC_ModelSqliteKit/SQLCipher' ***
+*/
++ (NSString *)whc_SqlitePasswordKey;
+
+/// 自定义数据表主键名称
+/**
+*** 返回自定义主键名称默认主键:_id ***
+*/
++ (NSString *)whc_SqliteMainkey;
+
+@end
+```
 
 用法
 ==============
@@ -60,6 +93,17 @@ whc.school.city = [City new];
 whc.school.city.name = @"北京";
 whc.school.city.personCount = 1000;
 
+/// 测试NSArray属性存储
+Car * tempCar = [Car new];
+tempCar.name = @"宝马";
+tempCar.brand = @"林肯";
+person.array = @[@"1",@"2"];
+person.carArray = @[tempCar];
+
+/// 测试NSDictionary属性存储
+person.dict = @{@"1":@"2"};
+person.dictCar = @{@"car": tempCar};
+
 [WHC_ModelSqlite insert:whc];
 ```
 
@@ -69,9 +113,9 @@ NSArray * persons = [self makeArrayPerson];
 [WHC_ModelSqlite insertArray:persons];
 ```
 
-####3.无条件查询数据库中模型类演示
+####3.无条件查询(查询所有记录)数据库中模型类演示
 ```objective-c
-NSArray * personArray = [WHC_ModelSqlite query:[Person class] where:nil];
+NSArray * personArray = [WHC_ModelSqlite query:[Person class]];
 ```
 
 ####4.条件查询数据库中模型类演示(where 条件查询语法和sql where条件查询语法一样)
@@ -145,7 +189,7 @@ Api文档
 * @param model_array 模型数组对象(model_array 里对象类型要一致)
 */
 
-+ (void)insertArray:(NSArray *)model_array;
++ (void)inserts:(NSArray *)model_array;
 
 /**
 * 说明: 存储模型到本地
