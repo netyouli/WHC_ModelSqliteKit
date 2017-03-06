@@ -30,7 +30,7 @@ WHC_ModelSqliteKit
 集成
 ==============
 * 使用CocoaPods:
--  pod 'WHC_ModelSqlite', '~> 1.1.5'
+-  pod 'WHC_ModelSqlite'
 * 需要加密数据库使用CocoaPods:
 -  pod 'WHC_ModelSqlite/SQLCipher'
 * 手工集成:
