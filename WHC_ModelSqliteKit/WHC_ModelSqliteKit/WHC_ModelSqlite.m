@@ -573,7 +573,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     NSString * database_cache_path = [NSString stringWithFormat:@"%@%@_v%@.sqlite",cache_directory,NSStringFromClass(model_class),version];
     if (sqlite3_open([database_cache_path UTF8String], &_whc_database) == SQLITE_OK) {
         NSString * psw_key = [self exceSelector:@selector(whc_SqlitePasswordKey) modelClass:model_class];
-        if (psw_key) {
+        if (psw_key && psw_key.length > 0) {
             [self setKey:psw_key];
         }
         return [self createTable:model_class];
