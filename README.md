@@ -99,12 +99,12 @@ whc.school.city.personCount = 1000;
 Car * tempCar = [Car new];
 tempCar.name = @"宝马";
 tempCar.brand = @"林肯";
-person.array = @[@"1",@"2"];
-person.carArray = @[tempCar];
+whc.array = @[@"1",@"2"];
+whc.carArray = @[tempCar];
 
 /// 测试NSDictionary属性存储
-person.dict = @{@"1":@"2"};
-person.dictCar = @{@"car": tempCar};
+whc.dict = @{@"1":@"2"};
+whc.dictCar = @{@"car": tempCar};
 
 [WHC_ModelSqlite insert:whc];
 ```

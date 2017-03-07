@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
 s.name         = "WHC_ModelSqliteKit"
-s.version      = "1.1.7" 
+s.version      = "1.1.7"
 s.summary      = "专业数据模型存储解决方案(告别直接使用sqlite和coreData)"
 
 s.homepage     = "https://github.com/netyouli/WHC_ModelSqliteKit"
