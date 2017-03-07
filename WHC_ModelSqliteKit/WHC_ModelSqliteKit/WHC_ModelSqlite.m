@@ -314,7 +314,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
 + (sqlite_int64)getModelMaxIdWithClass:(Class)model_class {
     sqlite_int64 max_id = 0;
     if (_whc_database) {
-        NSString * select_sql = [NSString stringWithFormat:@"SELECT MAX(_id) AS MAXVALUE FROM %@",NSStringFromClass(model_class)];
+        NSString * select_sql = [NSString stringWithFormat:@"SELECT MAX(%@) AS MAXVALUE FROM %@",[self getMainKeyWithClass:model_class],NSStringFromClass(model_class)];
         sqlite3_stmt * pp_stmt = nil;
         if (sqlite3_prepare_v2(_whc_database, [select_sql UTF8String], -1, &pp_stmt, nil) == SQLITE_OK) {
             while (sqlite3_step(pp_stmt) == SQLITE_ROW) {
@@ -329,7 +329,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
 + (NSArray *)getModelFieldNameWithClass:(Class)model_class {
     NSMutableArray * field_name_array = [NSMutableArray array];
     if (_whc_database) {
-        NSString * select_sql = [NSString stringWithFormat:@"SELECT * FROM %@ WHERE _id = %lld",NSStringFromClass(model_class),[self getModelMaxIdWithClass:model_class]];
+        NSString * select_sql = [NSString stringWithFormat:@"SELECT * FROM %@ WHERE %@ = %lld",NSStringFromClass(model_class),[self getMainKeyWithClass:model_class],[self getModelMaxIdWithClass:model_class]];
         sqlite3_stmt * pp_stmt = nil;
         if (sqlite3_prepare_v2(_whc_database, [select_sql UTF8String], -1, &pp_stmt, nil) == SQLITE_OK) {
             int colum_count = sqlite3_column_count(pp_stmt);
@@ -542,6 +542,14 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     return nil;
 }
 
++ (NSString *)getMainKeyWithClass:(Class)model_class {
+    NSString * main_key = [self exceSelector:@selector(whc_SqliteMainkey) modelClass:model_class];
+    if (!main_key || main_key.length == 0) {
+        main_key = @"_id";
+    }
+    return main_key;
+}
+
 + (BOOL)openTable:(Class)model_class {
     NSFileManager * file_manager = [NSFileManager defaultManager];
     NSString * cache_directory = [self databaseCacheDirectory];
@@ -553,7 +561,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     NSString * version = @"1.0";
     if ([model_class respondsToSelector:VERSION]) {
         version = [self exceSelector:VERSION modelClass:model_class];
-        if (!version) {version = @"1.0";}
+        if (!version || version.length == 0) {version = @"1.0";}
         NSString * local_model_name = [self localNameWithModel:model_class];
         if (local_model_name != nil &&
             [local_model_name rangeOfString:version].location == NSNotFound) {
@@ -573,12 +581,11 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     return NO;
 }
 
-+ (BOOL)createTable:(Class)modelClass {
-    NSString * table_name = NSStringFromClass(modelClass);
-    NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:modelClass];
++ (BOOL)createTable:(Class)model_class {
+    NSString * table_name = NSStringFromClass(model_class);
+    NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:model_class];
     if (field_dictionary.count > 0) {
-        NSString * main_key = [self exceSelector:@selector(whc_SqliteMainkey) modelClass:modelClass];
-        if (!main_key) {main_key = @"_id";}
+        NSString * main_key = [self getMainKeyWithClass:model_class];
         NSString * create_table_sql = [NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS %@ (%@ INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,",table_name,main_key];
         NSArray * field_array = field_dictionary.allKeys;
         for (NSString * field in field_array) {
@@ -1154,7 +1161,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     if (model != nil) {
         [sub_model_class_info enumerateKeysAndObjectsUsingBlock:^(NSString * name, NSString * obj, BOOL * _Nonnull stop) {
             Class sub_model_class = NSClassFromString(obj);
-            id sub_model = [self querySubModel:sub_model_class conditions:@[[NSString stringWithFormat:@"_id = %d",[[model valueForKey:name] intValue]]] queryType:_Where];
+            id sub_model = [self querySubModel:sub_model_class conditions:@[[NSString stringWithFormat:@"%@ = %d",[self getMainKeyWithClass:sub_model_class],[[model valueForKey:name] intValue]]] queryType:_Where];
             [model setValue:sub_model forKey:name];
         }];
     }
@@ -1178,7 +1185,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     [model_array enumerateObjectsUsingBlock:^(NSObject * model, NSUInteger idx, BOOL * _Nonnull stop) {
         [sub_model_class_info enumerateKeysAndObjectsUsingBlock:^(NSString * name, NSString * obj, BOOL * _Nonnull stop) {
             Class sub_model_class = NSClassFromString(obj);
-            id sub_model = [self querySubModel:sub_model_class conditions:@[[NSString stringWithFormat:@"_id = %d",[[model valueForKey:name] intValue]]] queryType:_Where];
+            id sub_model = [self querySubModel:sub_model_class conditions:@[[NSString stringWithFormat:@"%@ = %d",[self getMainKeyWithClass:sub_model_class],[[model valueForKey:name] intValue]]] queryType:_Where];
             [model setValue:sub_model forKey:name];
         }];
     }];
@@ -1353,7 +1360,10 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
         NSArray * model_object_array = queryDictionary.allValues.lastObject;
         [model_object_array enumerateObjectsUsingBlock:^(NSDictionary * sub_model_id_info, NSUInteger idx, BOOL * _Nonnull stop) {
             [sub_model_id_info.allKeys enumerateObjectsUsingBlock:^(NSString * field_name, NSUInteger idx, BOOL * _Nonnull stop) {
-                [self updateModel:[model_object valueForKey:field_name] where:[NSString stringWithFormat:@"_id = %@",sub_model_id_info[field_name]]];
+                id sub_model = [model_object valueForKey:field_name];
+                if (sub_model) {
+                    [self updateModel:sub_model where:[NSString stringWithFormat:@"%@ = %@",[self getMainKeyWithClass:[sub_model class]],sub_model_id_info[field_name]]];
+                }
             }];
         }];
     }
@@ -1399,7 +1409,8 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
             if ([self commonDeleteModel:model_class where:where]) {
                 [model_object_array enumerateObjectsUsingBlock:^(NSDictionary * sub_model_id_info, NSUInteger idx, BOOL * _Nonnull stop) {
                     [sub_model_id_info.allKeys enumerateObjectsUsingBlock:^(NSString * field_name, NSUInteger idx, BOOL * _Nonnull stop) {
-                        [self deleteModel:NSClassFromString(subModelInfo[field_name]) where:[NSString stringWithFormat:@"_id = %@",sub_model_id_info[field_name]]];
+                        Class sub_model_class = NSClassFromString(subModelInfo[field_name]);
+                        [self deleteModel:sub_model_class where:[NSString stringWithFormat:@"%@ = %@",[self getMainKeyWithClass:sub_model_class],sub_model_id_info[field_name]]];
                     }];
                 }];
             }

@@ -35,4 +35,8 @@
     return @"1.0";
 }
 
++ (NSString *)whc_SqliteMainkey {
+    return @"whc_id";
+}
+
 @end
