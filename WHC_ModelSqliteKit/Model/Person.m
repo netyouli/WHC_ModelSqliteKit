@@ -28,6 +28,7 @@
 // THE SOFTWARE.
 
 #import "Person.h"
+
 @implementation Person
 
 + (NSString *)whc_SqliteVersion {

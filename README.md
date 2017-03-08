@@ -9,6 +9,9 @@ WHC_ModelSqliteKit
 ==============
 <div align=center><img src="https://github.com/netyouli/WHC_ModelSqliteKit/blob/master/architecture.png"/></div></br>
 
+- Professional database storage solutions, thread safe, high-performance model object storage Sqlite open source library, realize one line of code database operation, simple database storage
+- 专业的数据库存储解决方案，线程安全，高性能模型对象存储Sqlite开源库，真正实现一行代码操作数据库，让数据库存储变得简单
+
 简介
 ==============
 - **架构**: 采用runtime和Sqlite完美结合打造的强大数据库操作引擎开源库
