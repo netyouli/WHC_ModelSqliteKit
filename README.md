@@ -43,6 +43,7 @@ WHC_ModelSqliteKit
 ==============
 * 在需要对数据表自定义信息需要model类实现WHC_SqliteInfo协议
 - 当模型类有新增/删除属性的时候需要在模型类里定义类方法whc_SqliteVersion方法修改模型类(数据库)版本号来表明有字段更新操作，库会根据这个VERSION变更智能检查并自动更新数据库字段，无需手动更新数据库字段
+- 当存储NSArray/NSDictionary属性并且里面是自定义模型对象时，模型对象必须实现NSCoding协议，可以使用[WHC_Model](https://github.com/netyouli/WHC_Model)库一行代码实现NSCoding相关代码
 ```objective-c
 /// 数据库协议信息
 @protocol WHC_SqliteInfo <NSObject>
