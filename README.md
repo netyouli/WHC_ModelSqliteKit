@@ -19,10 +19,17 @@ WHC_ModelSqliteKit
 - **易用**: 真正实现一行代码操作数据库
 - **目标**: 替代直接使用Sqlite和CoreData以及FMDB低效率方式
 - **支持**: (NSArray,NSDictionary,NSDate,NSData,NSString,NSNumber,Int,double,float,Bool,char)类型
-- **强大**: 支持模型嵌套继承模型类存储到数据库和多表嵌套联查
+- **强大**: 支持模型嵌套继承模型类存储到数据库和多表嵌套复杂查询
 - **智能**: 根据数据库模型类实现的WHC_SqliteInfo协议返回的版本号来智能更新数据库字段(动态删除/添加)
 - **咨询**: 712641411
 - **作者**: 吴海超
+
+多表嵌套复杂查询
+==============
+```objective-c
+/// 查询person名称为吴海超，并且person的汽车对象的名称为宝马或者person对象学校对象的所在城市对象的名称为北京
+NSArray * result = [WHC_ModelSqlite query:[Person class] where:@"name = '吴海超' and car.name = '宝马' or school.city.name = '北京'"];
+```
 
 要求
 ==============
@@ -116,7 +123,7 @@ whc.dictCar = @{@"car": tempCar};
 ####2.存储批量模型对象到数据库演示
 ```objective-c
 NSArray * persons = [self makeArrayPerson];
-[WHC_ModelSqlite insertArray:persons];
+[WHC_ModelSqlite inserts:persons];
 ```
 
 ####3.无条件查询(查询所有记录)数据库中模型类演示
