@@ -41,9 +41,9 @@ NSArray * result = [WHC_ModelSqlite query:[Person class]
 集成
 ==============
 * 使用CocoaPods:
--  pod 'WHC_ModelSqlite'
+-  pod 'WHC_ModelSqliteKit'
 * 需要加密数据库使用CocoaPods:
--  pod 'WHC_ModelSqlite/SQLCipher'
+-  pod 'WHC_ModelSqliteKit/SQLCipher'
 * 手工集成:
 -  导入文件夹WHC_ModelSqliteKit
 
