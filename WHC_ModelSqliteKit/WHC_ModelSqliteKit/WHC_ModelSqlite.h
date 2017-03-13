@@ -62,14 +62,14 @@
  * @param model_array 模型数组对象(model_array 里对象类型要一致)
  */
 
-+ (void)inserts:(NSArray *)model_array;
++ (BOOL)inserts:(NSArray *)model_array;
 
 /**
  * 说明: 存储模型到本地
  * @param model_object 模型对象
  */
 
-+ (void)insert:(id)model_object;
++ (BOOL)insert:(id)model_object;
 
 /**
  * 说明: 查询本地模型对象
@@ -179,14 +179,14 @@
  * @param where 查询条件(查询语法和SQL where 查询语法一样，where为空则更新所有)
  */
 
-+ (void)update:(id)model_object where:(NSString *)where;
++ (BOOL)update:(id)model_object where:(NSString *)where;
 
 /**
  * 说明: 清空本地模型对象
  * @param model_class 模型类
  */
 
-+ (void)clear:(Class)model_class;
++ (BOOL)clear:(Class)model_class;
 
 
 /**
@@ -195,7 +195,7 @@
  * @param where 查询条件(查询语法和SQL where 查询语法一样，where为空则删除所有)
  */
 
-+ (void)delete:(Class)model_class where:(NSString *)where;
++ (BOOL)delete:(Class)model_class where:(NSString *)where;
 
 /**
  * 说明: 清空所有本地模型数据库

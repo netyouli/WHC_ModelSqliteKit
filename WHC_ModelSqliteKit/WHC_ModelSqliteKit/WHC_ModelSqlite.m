@@ -38,7 +38,6 @@ static const NSString * WHC_Boolean    = @"INTERGER";
 static const NSString * WHC_Double     = @"DOUBLE";
 static const NSString * WHC_Float      = @"DOUBLE";
 static const NSString * WHC_Char       = @"NVARCHAR";
-static const NSString * WHC_Model      = @"INTERGER";
 static const NSString * WHC_Data       = @"BLOB";
 static const NSString * WHC_Array      = @"BLOB";
 static const NSString * WHC_Dictionary = @"BLOB";
@@ -52,7 +51,6 @@ typedef enum : NSUInteger {
     _Float,
     _Char,
     _Number,
-    _Model,
     _Data,
     _Date,
     _Array,
@@ -72,8 +70,6 @@ typedef enum : NSUInteger {
 
 static sqlite3 * _whc_database;
 
-static NSInteger _NO_HANDLE_KEY_ID = -2;
-
 @interface WHC_PropertyInfo : NSObject
 
 @property (nonatomic, assign, readonly) WHC_FieldType type;
@@ -85,10 +81,11 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
 @implementation WHC_PropertyInfo
 
 - (WHC_PropertyInfo *)initWithType:(WHC_FieldType)type
-                      propertyName:(NSString *)property_name {
+                      propertyName:(NSString *)property_name
+                              name:(NSString *)name {
     self = [super init];
     if (self) {
-        _name = property_name.mutableCopy;
+        _name = name.mutableCopy;
         _type = type;
         _setter = NSSelectorFromString([NSString stringWithFormat:@"set%@%@:",[property_name substringToIndex:1].uppercaseString,[property_name substringFromIndex:1]]);
         _getter = NSSelectorFromString(property_name);
@@ -99,8 +96,8 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
 @end
 
 @interface WHC_ModelSqlite ()
-@property (nonatomic, strong) NSMutableDictionary * sub_model_info;
 @property (nonatomic, strong) dispatch_semaphore_t dsema;
+@property (nonatomic, assign) BOOL check_update;
 @end
 
 @implementation WHC_ModelSqlite
@@ -108,8 +105,8 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
 - (WHC_ModelSqlite *)init {
     self = [super init];
     if (self) {
-        self.sub_model_info = [NSMutableDictionary dictionary];
         self.dsema = dispatch_semaphore_create(1);
+        self.check_update = YES;
     }
     return self;
 }
@@ -168,8 +165,6 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     switch (type) {
         case _String:
             return WHC_String;
-        case _Model:
-            return WHC_Model;
         case _Int:
             return WHC_Int;
         case _Number:
@@ -197,11 +192,17 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
 }
 
 + (NSDictionary *)parserModelObjectFieldsWithModelClass:(Class)model_class {
-    NSMutableDictionary * fields = [NSMutableDictionary dictionary];
+    return [self parserSubModelObjectFieldsWithModelClass:model_class propertyName:nil complete:nil];
+}
+
++ (NSDictionary *)parserSubModelObjectFieldsWithModelClass:(Class)model_class propertyName:(NSString *)main_property_name complete:(void(^)(NSString * key, WHC_PropertyInfo * property_object))complete {
+    BOOL need_dictionary_save = !main_property_name && !complete;
+    NSMutableDictionary * fields = need_dictionary_save ? [NSMutableDictionary dictionary] : nil;
     Class super_class = class_getSuperclass(model_class);
     if (super_class != nil &&
         super_class != [NSObject class]) {
-        [fields setValuesForKeysWithDictionary:[self parserModelObjectFieldsWithModelClass:super_class]];
+        NSDictionary * super_fields = [self parserSubModelObjectFieldsWithModelClass:super_class propertyName:main_property_name complete:complete];
+        if (need_dictionary_save) [fields setValuesForKeysWithDictionary:super_fields];
     }
     unsigned int property_count = 0;
     objc_property_t * propertys = class_copyPropertyList(model_class, &property_count);
@@ -212,48 +213,75 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
         NSString * property_name_string = [NSString stringWithUTF8String:property_name];
         NSString * property_attributes_string = [NSString stringWithUTF8String:property_attributes];
         NSArray * property_attributes_list = [property_attributes_string componentsSeparatedByString:@"\""];
+        NSString * name = property_name_string;
+        if (!need_dictionary_save) {
+            name = [NSString stringWithFormat:@"%@$%@",main_property_name,property_name_string];
+        }
+        WHC_PropertyInfo * property_info = nil;
         if (property_attributes_list.count == 1) {
             // base type
             WHC_FieldType type = [self parserFieldTypeWithAttr:property_attributes_list[0]];
-            WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:type propertyName:property_name_string];
-            [fields setObject:property_info forKey:property_name_string];
+            property_info = [[WHC_PropertyInfo alloc] initWithType:type propertyName:property_name_string name:name];
         }else {
             // refernece type
             Class class_type = NSClassFromString(property_attributes_list[1]);
             if (class_type == [NSNumber class]) {
-                WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_Number propertyName:property_name_string];
-                [fields setObject:property_info forKey:property_name_string];
+                property_info = [[WHC_PropertyInfo alloc] initWithType:_Number propertyName:property_name_string name:name];
             }else if (class_type == [NSString class]) {
-                WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_String propertyName:property_name_string];
-                [fields setObject:property_info forKey:property_name_string];
+                property_info = [[WHC_PropertyInfo alloc] initWithType:_String propertyName:property_name_string name:name];
             }else if (class_type == [NSData class]) {
-                WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_Data propertyName:property_name_string];
-                [fields setObject:property_info forKey:property_name_string];
+                property_info = [[WHC_PropertyInfo alloc] initWithType:_Data propertyName:property_name_string name:name];
             }else if (class_type == [NSArray class]) {
-                WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_Array propertyName:property_name_string];
-                [fields setObject:property_info forKey:property_name_string];
+                property_info = [[WHC_PropertyInfo alloc] initWithType:_Array propertyName:property_name_string name:name];
             }else if (class_type == [NSDictionary class]) {
-                WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_Dictionary propertyName:property_name_string];
-                [fields setObject:property_info forKey:property_name_string];
+                property_info = [[WHC_PropertyInfo alloc] initWithType:_Dictionary propertyName:property_name_string name:name];
             }else if (class_type == [NSDate class]) {
-                WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_Date propertyName:property_name_string];
-                [fields setObject:property_info forKey:property_name_string];
+                property_info = [[WHC_PropertyInfo alloc] initWithType:_Date propertyName:property_name_string name:name];
             }else if (class_type == [NSSet class] ||
                       class_type == [NSValue class] ||
                       class_type == [NSError class] ||
                       class_type == [NSURL class] ||
                       class_type == [NSStream class] ||
                       class_type == [NSScanner class] ||
-                      class_type == [NSException class]) {
+                      class_type == [NSException class] ||
+                      class_type == [NSBundle class]) {
                 [self log:@"检查模型类异常数据类型"];
             }else {
-                WHC_PropertyInfo * property_info = [[WHC_PropertyInfo alloc] initWithType:_Model propertyName:property_name_string];
-                [fields setObject:property_info forKey:property_name_string];
+                if (need_dictionary_save) {
+                    [self parserSubModelObjectFieldsWithModelClass:class_type propertyName:name complete:^(NSString * key, WHC_PropertyInfo *property_object) {
+                        [fields setObject:property_object forKey:key];
+                    }];
+                }else {
+                    [self parserSubModelObjectFieldsWithModelClass:class_type propertyName:name complete:complete];
+                }
             }
+        }
+        if (need_dictionary_save && property_info) [fields setObject:property_info forKey:name];
+        if (property_info && complete) {
+            complete(name,property_info);
         }
     }
     free(propertys);
     return fields;
+}
+
++ (BOOL)isSubModelWithClass:(Class)model_class {
+    return (model_class != [NSString class] &&
+            model_class != [NSNumber class] &&
+            model_class != [NSArray class] &&
+            model_class != [NSSet class] &&
+            model_class != [NSData class] &&
+            model_class != [NSDate class] &&
+            model_class != [NSDictionary class] &&
+            model_class != [NSValue class] &&
+            model_class != [NSError class] &&
+            model_class != [NSURL class] &&
+            model_class != [NSStream class] &&
+            model_class != [NSURLRequest class] &&
+            model_class != [NSURLResponse class] &&
+            model_class != [NSBundle class] &&
+            model_class != [NSScanner class] &&
+            model_class != [NSException class]);
 }
 
 + (NSDictionary *)scanCommonSubModel:(id)model isClass:(BOOL)is_class {
@@ -275,19 +303,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
         NSArray * property_attributes_list = [property_attributes_string componentsSeparatedByString:@"\""];
         if (property_attributes_list.count > 1) {
             Class class_type = NSClassFromString(property_attributes_list[1]);
-            if (class_type != [NSString class] &&
-                class_type != [NSNumber class] &&
-                class_type != [NSArray class] &&
-                class_type != [NSSet class] &&
-                class_type != [NSData class] &&
-                class_type != [NSDate class] &&
-                class_type != [NSDictionary class] &&
-                class_type != [NSValue class] &&
-                class_type != [NSError class] &&
-                class_type != [NSURL class] &&
-                class_type != [NSStream class] &&
-                class_type != [NSScanner class] &&
-                class_type != [NSException class]) {
+            if ([self isSubModelWithClass:class_type]) {
                 if (is_class) {
                     [sub_model_info setObject:property_attributes_list[1] forKey:property_name_string];
                 }else {
@@ -329,16 +345,18 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
 + (NSArray *)getModelFieldNameWithClass:(Class)model_class {
     NSMutableArray * field_name_array = [NSMutableArray array];
     if (_whc_database) {
-        NSString * select_sql = [NSString stringWithFormat:@"SELECT * FROM %@ WHERE %@ = %lld",NSStringFromClass(model_class),[self getMainKeyWithClass:model_class],[self getModelMaxIdWithClass:model_class]];
-        sqlite3_stmt * pp_stmt = nil;
-        if (sqlite3_prepare_v2(_whc_database, [select_sql UTF8String], -1, &pp_stmt, nil) == SQLITE_OK) {
-            int colum_count = sqlite3_column_count(pp_stmt);
-            for (int column = 1; column < colum_count; column++) {
-                NSString * field_name = [NSString stringWithCString:sqlite3_column_name(pp_stmt, column) encoding:NSUTF8StringEncoding];
-                [field_name_array addObject:field_name];
+        NSString *sql = [NSString stringWithFormat:@"pragma table_info ('%@')",NSStringFromClass(model_class)];
+        sqlite3_stmt *pp_stmt;
+        if(sqlite3_prepare_v2(_whc_database, [sql UTF8String], -1, &pp_stmt, NULL) == SQLITE_OK){
+            while(sqlite3_step(pp_stmt) == SQLITE_ROW) {
+                int cols = sqlite3_column_count(pp_stmt);
+                if (cols > 1) {
+                    NSString *name = [NSString stringWithCString:(const char *)sqlite3_column_text(pp_stmt, 1) encoding:NSUTF8StringEncoding];
+                    [field_name_array addObject:name];
+                }
             }
+            sqlite3_finalize(pp_stmt);
         }
-        sqlite3_finalize(pp_stmt);
     }
     return field_name_array;
 }
@@ -351,6 +369,10 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
         NSString * cache_directory = [self databaseCacheDirectory];
         NSString * database_cache_path = [NSString stringWithFormat:@"%@%@",cache_directory,local_model_name];
         if (sqlite3_open([database_cache_path UTF8String], &_whc_database) == SQLITE_OK) {
+            NSString * psw_key = [self exceSelector:@selector(whc_SqlitePasswordKey) modelClass:model_class];
+            if (psw_key && psw_key.length > 0) {
+                [self setKey:psw_key];
+            }
             NSArray * old_model_field_name_array = [self getModelFieldNameWithClass:model_class];
             NSDictionary * new_model_info = [self parserModelObjectFieldsWithModelClass:model_class];
             NSMutableString * delete_field_names = [NSMutableString string];
@@ -358,7 +380,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
             [old_model_field_name_array enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                 if (new_model_info[obj] == nil) {
                     [delete_field_names appendString:obj];
-                    [delete_field_names appendString:@" ,"];
+                    [delete_field_names appendString:@","];
                 }
             }];
             [new_model_info enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, WHC_PropertyInfo * obj, BOOL * _Nonnull stop) {
@@ -377,131 +399,26 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
             }
             if (delete_field_names.length > 0) {
                 [delete_field_names deleteCharactersInRange:NSMakeRange(delete_field_names.length - 1, 1)];
-                NSString * select_sql = [NSString stringWithFormat:@"SELECT * FROM %@",table_name];
-                NSMutableArray * old_model_data_array = [NSMutableArray array];
-                sqlite3_stmt * pp_stmt = nil;
-                NSDictionary * sub_model_class_info = [self scanSubModelClass:model_class];
-                NSMutableString * sub_model_name = [NSMutableString string];
-                [sub_model_class_info enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-                    [sub_model_name appendString:key];
-                    [sub_model_name appendString:@" "];
-                }];
-                if (sqlite3_prepare_v2(_whc_database, [select_sql UTF8String], -1, &pp_stmt, nil) == SQLITE_OK) {
-                    int colum_count = sqlite3_column_count(pp_stmt);
-                    while (sqlite3_step(pp_stmt) == SQLITE_ROW) {
-                        id new_model_object = [model_class new];
-                        for (int column = 1; column < colum_count; column++) {
-                            NSString * old_field_name = [NSString stringWithCString:sqlite3_column_name(pp_stmt, column) encoding:NSUTF8StringEncoding];
-                            WHC_PropertyInfo * property_info = new_model_info[old_field_name];
-                            if (property_info == nil) continue;
-                            switch (property_info.type) {
-                                case _Number: {
-                                    double value = sqlite3_column_double(pp_stmt, column);
-                                    [new_model_object setValue:@(value) forKey:old_field_name];
-                                }
-                                    break;
-                                case _Model: {
-                                    sqlite3_int64 value = sqlite3_column_int64(pp_stmt, column);
-                                    [new_model_object setValue:@(value) forKey:old_field_name];
-                                }
-                                    break;
-                                case _Int: {
-                                    sqlite3_int64 value = sqlite3_column_int64(pp_stmt, column);
-                                    if (sub_model_name != nil && sub_model_name.length > 0) {
-                                        if ([sub_model_name rangeOfString:old_field_name].location == NSNotFound) {
-                                            ((void (*)(id, SEL, int64_t))(void *) objc_msgSend)((id)new_model_object, property_info.setter, value);
-                                        }else {
-                                            [new_model_object setValue:@(value) forKey:old_field_name];
-                                        }
-                                    }else {
-                                        ((void (*)(id, SEL, int64_t))(void *) objc_msgSend)((id)new_model_object, property_info.setter, value);
-                                    }
-                                }
-                                    break;
-                                case _String: {
-                                    const unsigned char * text = sqlite3_column_text(pp_stmt, column);
-                                    if (text != NULL) {
-                                        NSString * value = [NSString stringWithCString:(const char *)text encoding:NSUTF8StringEncoding];
-                                        [new_model_object setValue:value forKey:old_field_name];
-                                    }else {
-                                        [new_model_object setValue:@"" forKey:old_field_name];
-                                    }
-                                }
-                                    break;
-                                case _Data: {
-                                    int length = sqlite3_column_bytes(pp_stmt, column);
-                                    const void * blob = sqlite3_column_blob(pp_stmt, column);
-                                    if (blob) {
-                                        NSData * value = [NSData dataWithBytes:blob length:length];
-                                        [new_model_object setValue:value forKey:old_field_name];
-                                    }else {
-                                        [new_model_object setValue:[NSData data] forKey:old_field_name];
-                                    }
-                                }
-                                    break;
-                                case _Date: {
-                                    double value = sqlite3_column_double(pp_stmt, column);
-                                    if (value > 0) {
-                                        NSDate * date_value = [NSDate dateWithTimeIntervalSince1970:value];
-                                        if (date_value) {
-                                            [new_model_object setValue:date_value forKey:old_field_name];
-                                        }
-                                    }
-                                }
-                                    break;
-                                case _Dictionary:
-                                case _Array: {
-                                    int length = sqlite3_column_bytes(pp_stmt, column);
-                                    const void * blob = sqlite3_column_blob(pp_stmt, column);
-                                    if (blob) {
-                                        NSData * value = [NSData dataWithBytes:blob length:length];
-                                        @try {
-                                            id set_value = [NSKeyedUnarchiver unarchiveObjectWithData:value];
-                                            [new_model_object setValue:set_value forKey:old_field_name];
-                                        } @catch (NSException *exception) {
-                                            [self log:@"update 操作异常 Array/Dictionary 元素没实现NSCoding协议解归档失败"];
-                                        }
-                                    }else {
-                                        [new_model_object setValue:property_info.type == _Dictionary ? [NSDictionary dictionary] : [NSArray array] forKey:old_field_name];
-                                    }
-                                }
-                                    break;
-                                case _Char:
-                                case _Boolean: {
-                                    int value = sqlite3_column_int(pp_stmt, column);
-                                    ((void (*)(id, SEL, int))(void *) objc_msgSend)((id)new_model_object, property_info.setter, value);
-                                }
-                                    break;
-                                case _Float:
-                                case _Double: {
-                                    double value = sqlite3_column_double(pp_stmt, column);
-                                    ((void (*)(id, SEL, float))(void *) objc_msgSend)((id)new_model_object, property_info.setter, value);
-                                }
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                        [old_model_data_array addObject:new_model_object];
-                    }
-                }
-                sqlite3_finalize(pp_stmt);
-                [self close];
-                
-                NSFileManager * file_manager = [NSFileManager defaultManager];
-                NSString * file_path = [self localPathWithModel:model_class];
-                if (file_path) {
-                    [file_manager removeItemAtPath:file_path error:nil];
-                }
-                
-                if ([self openTable:model_class]) {
-                    [self execSql:@"BEIGIN"];
-                    [old_model_data_array enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                        [self commonInsert:obj index:_NO_HANDLE_KEY_ID];
-                    }];
-                    [self execSql:@"COMMIT"];
+                NSString * default_key = [self getMainKeyWithClass:model_class];
+                if (![default_key isEqualToString:delete_field_names]) {
+                    [self shareInstance].check_update = NO;
+                    NSArray * old_model_data_array = [self commonQuery:model_class conditions:@[@""] queryType:_Where];
                     [self close];
-                    return;
+                    NSFileManager * file_manager = [NSFileManager defaultManager];
+                    NSString * file_path = [self localPathWithModel:model_class];
+                    if (file_path) {
+                        [file_manager removeItemAtPath:file_path error:nil];
+                    }
+                    
+                    if ([self openTable:model_class]) {
+                        [self execSql:@"BEGIN TRANSACTION"];
+                        [old_model_data_array enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                            [self commonInsert:obj];
+                        }];
+                        [self execSql:@"COMMIT"];
+                        [self close];
+                        return;
+                    }
                 }
             }
             [self close];
@@ -562,13 +479,16 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     if ([model_class respondsToSelector:VERSION]) {
         version = [self exceSelector:VERSION modelClass:model_class];
         if (!version || version.length == 0) {version = @"1.0";}
-        NSString * local_model_name = [self localNameWithModel:model_class];
-        if (local_model_name != nil &&
-            [local_model_name rangeOfString:version].location == NSNotFound) {
-            [self updateTableFieldWithModel:model_class
-                                 newVersion:version
-                             localModelName:local_model_name];
+        if ([self shareInstance].check_update) {
+            NSString * local_model_name = [self localNameWithModel:model_class];
+            if (local_model_name != nil &&
+                [local_model_name rangeOfString:version].location == NSNotFound) {
+                [self updateTableFieldWithModel:model_class
+                                     newVersion:version
+                                 localModelName:local_model_name];
+            }
         }
+        [self shareInstance].check_update = YES;
     }
     NSString * database_cache_path = [NSString stringWithFormat:@"%@%@_v%@.sqlite",cache_directory,NSStringFromClass(model_class),version];
     if (sqlite3_open([database_cache_path UTF8String], &_whc_database) == SQLITE_OK) {
@@ -586,10 +506,8 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:model_class];
     if (field_dictionary.count > 0) {
         NSString * main_key = [self getMainKeyWithClass:model_class];
-        NSString * create_table_sql = [NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS %@ (%@ INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,",table_name,main_key];
-        NSArray * field_array = field_dictionary.allKeys;
-        for (NSString * field in field_array) {
-            WHC_PropertyInfo * property_info = field_dictionary[field];
+        __block NSString * create_table_sql = [NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS %@ (%@ INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,",table_name,main_key];
+        [field_dictionary enumerateKeysAndObjectsUsingBlock:^(NSString * field, WHC_PropertyInfo * property_info, BOOL * _Nonnull stop) {
             create_table_sql = [create_table_sql stringByAppendingFormat:@"%@ %@ DEFAULT ",field, [self databaseFieldTypeWithType:property_info.type]];
             switch (property_info.type) {
                 case _Data:
@@ -601,7 +519,6 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                     break;
                 case _Boolean:
                 case _Int:
-                case _Model:
                     create_table_sql = [create_table_sql stringByAppendingString:@"0,"];
                     break;
                 case _Float:
@@ -613,7 +530,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                 default:
                     break;
             }
-        }
+        }];
         create_table_sql = [create_table_sql substringWithRange:NSMakeRange(0, create_table_sql.length - 1)];
         create_table_sql = [create_table_sql stringByAppendingString:@")"];
         return [self execSql:create_table_sql];
@@ -622,10 +539,14 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
 }
 
 + (BOOL)execSql:(NSString *)sql {
-    return sqlite3_exec(_whc_database, [sql UTF8String], nil, nil, nil) == SQLITE_OK;
+    BOOL result = sqlite3_exec(_whc_database, [sql UTF8String], nil, nil, nil) == SQLITE_OK;
+    if (!result) {
+        [self log:[NSString stringWithFormat:@"执行失败->%@", sql]];
+    }
+    return result;
 }
 
-+ (void)commonInsert:(id)model_object index:(NSInteger)index {
++ (BOOL)commonInsert:(id)model_object {
     sqlite3_stmt * pp_stmt = nil;
     NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:[model_object class]];
     NSString * table_name = NSStringFromClass([model_object class]);
@@ -633,13 +554,17 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     NSArray * field_array = field_dictionary.allKeys;
     NSMutableArray * value_array = [NSMutableArray array];
     NSMutableArray * insert_field_array = [NSMutableArray array];
-    [field_array enumerateObjectsUsingBlock:^(NSString *  _Nonnull field, NSUInteger idx, BOOL * _Nonnull stop) {
+    [field_array enumerateObjectsUsingBlock:^(NSString * field, NSUInteger idx, BOOL * _Nonnull stop) {
         WHC_PropertyInfo * property_info = field_dictionary[field];
         [insert_field_array addObject:field];
         insert_sql = [insert_sql stringByAppendingFormat:@"%@,",field];
-        id value = [model_object valueForKey:field];
-        id subModelKeyId = [self shareInstance].sub_model_info[property_info.name];
-        if ((value && subModelKeyId == nil) || index == _NO_HANDLE_KEY_ID) {
+        id value = nil;
+        if ([field rangeOfString:@"$"].location == NSNotFound) {
+            value = [model_object valueForKey:field];
+        }else {
+            value = [model_object valueForKeyPath:[field stringByReplacingOccurrencesOfString:@"$" withString:@"."]];
+        }
+        if (value) {
             [value_array addObject:value];
         }else {
             switch (property_info.type) {
@@ -666,30 +591,9 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                     [value_array addObject:@(0.0)];
                 }
                     break;
-                case _Model: {
-                    if ([subModelKeyId isKindOfClass:[NSArray class]]) {
-                        [value_array addObject:subModelKeyId[index]];
-                    }else {
-                        if (subModelKeyId) {
-                            [value_array addObject:subModelKeyId];
-                        }else {
-                            [value_array addObject:@(_NO_HANDLE_KEY_ID)];
-                        }
-                    }
-                }
-                    break;
                 case _Int: {
-                    id sub_model_main_key_object = [self shareInstance].sub_model_info[property_info.name];
-                    if (sub_model_main_key_object != nil) {
-                        if (index != -1) {
-                            [value_array addObject:sub_model_main_key_object[index]];
-                        }else {
-                            [value_array addObject:sub_model_main_key_object];
-                        }
-                    }else {
-                        NSNumber * value = @(((int64_t (*)(id, SEL))(void *) objc_msgSend)((id)model_object, property_info.getter));
-                        [value_array addObject:value];
-                    }
+                    NSNumber * value = @(((int64_t (*)(id, SEL))(void *) objc_msgSend)((id)model_object, property_info.getter));
+                    [value_array addObject:value];
                 }
                     break;
                 case _Boolean: {
@@ -717,7 +621,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
             }
         }
     }];
-   
+    
     insert_sql = [insert_sql substringWithRange:NSMakeRange(0, insert_sql.length - 1)];
     insert_sql = [insert_sql stringByAppendingString:@") VALUES ("];
     
@@ -761,9 +665,6 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                 case _Number:
                     sqlite3_bind_double(pp_stmt, index, [value doubleValue]);
                     break;
-                case _Model:
-                    sqlite3_bind_int64(pp_stmt, index, (sqlite3_int64)[value integerValue]);
-                    break;
                 case _Int:
                     sqlite3_bind_int64(pp_stmt, index, (sqlite3_int64)[value longLongValue]);
                     break;
@@ -796,102 +697,121 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
         }
     }else {
         [self log:@"Sorry存储数据失败,建议检查模型类属性类型是否符合规范"];
+        return NO;
     }
+    return YES;
 }
 
-+ (NSArray *)commonInsertSubArrayModelObject:(NSArray *)sub_array_model_object {
-    NSMutableArray * id_array = [NSMutableArray array];
-    __block sqlite_int64 _id = -1;
-    Class first_sub_model_class = [sub_array_model_object.firstObject class];
-    if (sub_array_model_object.count > 0 &&
-        [self openTable:first_sub_model_class]) {
-        _id = [self getModelMaxIdWithClass:first_sub_model_class];
-        [self execSql:@"BEIGIN"];
-        [sub_array_model_object enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            _id++;
-            [self commonInsert:obj index:idx];
-            [id_array addObject:@(_id)];
-        }];
-        [self execSql:@"COMMIT"];
-        [self close];
-    }
-    return id_array;
-}
-
-+ (NSArray *)inserSubModelArray:(NSArray *)model_array {
-    id first_model_object = model_array.firstObject;
-    NSDictionary * sub_model_object_info = [self scanSubModelObject:first_model_object];
-    if (sub_model_object_info.count > 0) {
-        NSMutableDictionary * sub_model_object_info = [NSMutableDictionary dictionary];
-        [model_array enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            NSDictionary * temp_sub_model_object_info = [self scanSubModelObject:obj];
-            [temp_sub_model_object_info enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-                if (sub_model_object_info[key] != nil) {
-                    NSMutableArray * temp_sub_array = [sub_model_object_info[key] mutableCopy];
-                    [temp_sub_array addObject:obj];
-                    sub_model_object_info[key] = temp_sub_array;
-                }else {
-                    NSMutableArray * temp_sub_array = [NSMutableArray array];
-                    [temp_sub_array addObject:obj];
-                    sub_model_object_info[key] = temp_sub_array;
-                }
-            }];
-        }];
-        if (sub_model_object_info.count > 0) {
-            [sub_model_object_info enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, NSArray * subArray, BOOL * _Nonnull stop) {
-                NSArray * sub_id_array = [self inserSubModelArray:subArray];
-                [self shareInstance].sub_model_info[key] = sub_id_array;
-            }];
-        }
-    }
-    return [self commonInsertSubArrayModelObject:model_array];
-}
-
-+ (void)inserts:(NSArray *)model_array {
++ (BOOL)inserts:(NSArray *)model_array {
+    __block BOOL result = YES;
     dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
     @autoreleasepool {
-        [[self shareInstance].sub_model_info removeAllObjects];
         if (model_array != nil && model_array.count > 0) {
-            [self inserSubModelArray:model_array];
+            if ([self openTable:[model_array.firstObject class]]) {
+                [self execSql:@"BEGIN TRANSACTION"];
+                [model_array enumerateObjectsUsingBlock:^(id model, NSUInteger idx, BOOL * _Nonnull stop) {
+                    result = [self commonInsert:model];
+                    if (!result) {*stop = YES;}
+                }];
+                [self execSql:@"COMMIT"];
+                [self close];
+            }
         }
     }
     dispatch_semaphore_signal([self shareInstance].dsema);
+    return result;
 }
 
-+ (sqlite_int64)commonInsertSubModelObject:(id)sub_model_object {
-    sqlite_int64 _id = -1;
-    if ([self openTable:[sub_model_object class]]) {
-        [self execSql:@"BEIGIN"];
-        [self commonInsert:sub_model_object index:-1];
-        [self execSql:@"COMMIT"];
-        _id = [self getModelMaxIdWithClass:[sub_model_object class]];
-        [self close];
-    }
-    return _id;
-}
 
-+ (sqlite_int64)insertModelObject:(id)model_object {
-    NSDictionary * sub_model_objects_info = [self scanSubModelObject:model_object];
-    if (sub_model_objects_info.count > 0) {
-        [sub_model_objects_info enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-            sqlite_int64 _id = [self insertModelObject:obj];
-            [[self shareInstance].sub_model_info setObject:@(_id) forKey:key];
-        }];
-    }
-    return [self commonInsertSubModelObject:model_object];
-}
-
-+ (void)insert:(id)model_object {
++ (BOOL)insert:(id)model_object {
+    BOOL result = YES;
     dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
     @autoreleasepool {
-        [[self shareInstance].sub_model_info removeAllObjects];
-        [self insertModelObject:model_object];
+        if ([self openTable:[model_object class]]) {
+            [self execSql:@"BEGIN TRANSACTION"];
+            result = [self commonInsert:model_object];
+            [self execSql:@"COMMIT"];
+            [self close];
+        }else {
+            result = NO;
+        }
     }
     dispatch_semaphore_signal([self shareInstance].dsema);
+    return result;
 }
 
-+ (NSArray *)commonQuery:(Class)model_class conditions:(NSArray *)conditions subModelName:(NSString *)sub_model_name queryType:(WHC_QueryType)query_type {
-    if (![self openTable:model_class]) return @[];
++ (id)autoNewSubmodelWithClass:(Class)model_class {
+    if (model_class) {
+        id model = model_class.new;
+        unsigned int property_count = 0;
+        objc_property_t * propertys = class_copyPropertyList(model_class, &property_count);
+        for (int i = 0; i < property_count; i++) {
+            objc_property_t property = propertys[i];
+            const char * property_attributes = property_getAttributes(property);
+            NSString * property_attributes_string = [NSString stringWithUTF8String:property_attributes];
+            NSArray * property_attributes_list = [property_attributes_string componentsSeparatedByString:@"\""];
+            if (property_attributes_list.count > 1) {
+                // refernece type
+                Class class_type = NSClassFromString(property_attributes_list[1]);
+                if ([self isSubModelWithClass:class_type]) {
+                    const char * property_name = property_getName(property);
+                    NSString * property_name_string = [NSString stringWithUTF8String:property_name];
+                    [model setValue:[self autoNewSubmodelWithClass:class_type] forKey:property_name_string];
+                }
+            }
+        }
+        return model;
+    }
+    return nil;
+}
+
++ (BOOL)isNumber:(NSString *)cahr {
+    NSScanner *scan = [NSScanner scannerWithString:cahr];
+    int value;
+    return [scan scanInt:&value] && [scan isAtEnd];
+}
+
++ (NSString *)handleWhere:(NSString *)where {
+    NSString * where_string = @"";
+    if (where && where.length > 0) {
+        NSArray * where_list = [where componentsSeparatedByString:@" "];
+        NSMutableString * handle_where = [NSMutableString string];
+        [where_list enumerateObjectsUsingBlock:^(NSString * sub_where, NSUInteger idx, BOOL * _Nonnull stop) {
+            NSRange dot_range = [sub_where rangeOfString:@"."];
+            if (dot_range.location != NSNotFound &&
+                ![sub_where hasPrefix:@"'"] &&
+                ![sub_where hasSuffix:@"'"]) {
+                
+                __block BOOL has_number = NO;
+                NSArray * dot_sub_list = [sub_where componentsSeparatedByString:@"."];
+                [dot_sub_list enumerateObjectsUsingBlock:^(NSString * dot_string, NSUInteger idx, BOOL * _Nonnull stop) {
+                    NSString * before_char = nil;
+                    if (dot_string.length > 0) {
+                        before_char = [dot_string substringToIndex:1];
+                        if ([self isNumber:before_char]) {
+                            has_number = YES;
+                            *stop = YES;
+                        }
+                    }
+                }];
+                if (!has_number) {
+                    [handle_where appendFormat:@"%@ ",[sub_where stringByReplacingOccurrencesOfString:@"." withString:@"$"]];
+                }else {
+                    [handle_where appendFormat:@"%@ ",sub_where];
+                }
+            }else {
+                [handle_where appendFormat:@"%@ ",sub_where];
+            }
+        }];
+        if ([handle_where hasSuffix:@" "]) {
+            [handle_where deleteCharactersInRange:NSMakeRange(handle_where.length - 1, 1)];
+        }
+        return handle_where;
+    }
+    return where_string;
+}
+
++ (NSArray *)commonQuery:(Class)model_class conditions:(NSArray *)conditions queryType:(WHC_QueryType)query_type {
     NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:model_class];
     NSString * table_name = NSStringFromClass(model_class);
     NSString * select_sql = [NSString stringWithFormat:@"SELECT * FROM %@",table_name];
@@ -901,34 +821,34 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     if (conditions != nil && conditions.count > 0) {
         switch (query_type) {
             case _Where: {
-                where = conditions.firstObject;
+                where = [self handleWhere:conditions.firstObject];
                 if (where.length > 0) {
                     select_sql = [select_sql stringByAppendingFormat:@" WHERE %@",where];
                 }
             }
                 break;
             case _Order: {
-                order = conditions.firstObject;
+                order = [conditions.firstObject stringByReplacingOccurrencesOfString:@"." withString:@"$"];
                 if (order.length > 0) {
                     select_sql = [select_sql stringByAppendingFormat:@" ORDER %@",order];
                 }
             }
                 break;
             case _Limit:
-                limit = conditions.firstObject;
+                limit = [conditions.firstObject stringByReplacingOccurrencesOfString:@"." withString:@"$"];
                 if (limit.length > 0) {
                     select_sql = [select_sql stringByAppendingFormat:@" LIMIT %@",limit];
                 }
                 break;
             case _WhereOrder: {
                 if (conditions.count > 0) {
-                    where = conditions.firstObject;
+                    where = [self handleWhere:conditions.firstObject];
                     if (where.length > 0) {
                         select_sql = [select_sql stringByAppendingFormat:@" WHERE %@",where];
                     }
                 }
                 if (conditions.count > 1) {
-                    order = conditions.lastObject;
+                    order = [conditions.lastObject stringByReplacingOccurrencesOfString:@"." withString:@"$"];
                     if (order.length > 0) {
                         select_sql = [select_sql stringByAppendingFormat:@" ORDER %@",order];
                     }
@@ -937,13 +857,13 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                 break;
             case _WhereLimit: {
                 if (conditions.count > 0) {
-                    where = conditions.firstObject;
+                    where = [self handleWhere:conditions.firstObject];
                     if (where.length > 0) {
                         select_sql = [select_sql stringByAppendingFormat:@" WHERE %@",where];
                     }
                 }
                 if (conditions.count > 1) {
-                    limit = conditions.lastObject;
+                    limit = [conditions.lastObject stringByReplacingOccurrencesOfString:@"." withString:@"$"];
                     if (limit.length > 0) {
                         select_sql = [select_sql stringByAppendingFormat:@" LIMIT %@",limit];
                     }
@@ -952,13 +872,13 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                 break;
             case _OrderLimit: {
                 if (conditions.count > 0) {
-                    order = conditions.firstObject;
+                    order = [conditions.firstObject stringByReplacingOccurrencesOfString:@"." withString:@"$"];
                     if (order.length > 0) {
                         select_sql = [select_sql stringByAppendingFormat:@" ORDER %@",order];
                     }
                 }
                 if (conditions.count > 1) {
-                    limit = conditions.lastObject;
+                    limit = [conditions.lastObject stringByReplacingOccurrencesOfString:@"." withString:@"$"];
                     if (limit.length > 0) {
                         select_sql = [select_sql stringByAppendingFormat:@" LIMIT %@",limit];
                     }
@@ -967,19 +887,19 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                 break;
             case _WhereOrderLimit: {
                 if (conditions.count > 0) {
-                    where = conditions.firstObject;
+                    where = [self handleWhere:conditions.firstObject];
                     if (where.length > 0) {
                         select_sql = [select_sql stringByAppendingFormat:@" WHERE %@",where];
                     }
                 }
                 if (conditions.count > 1) {
-                    order = conditions[1];
+                    order = [conditions[1] stringByReplacingOccurrencesOfString:@"." withString:@"$"];
                     if (order.length > 0) {
                         select_sql = [select_sql stringByAppendingFormat:@" ORDER %@",order];
                     }
                 }
                 if (conditions.count > 2) {
-                    limit = conditions.lastObject;
+                    limit = [conditions.lastObject stringByReplacingOccurrencesOfString:@"." withString:@"$"];
                     if (limit.length > 0) {
                         select_sql = [select_sql stringByAppendingFormat:@" LIMIT %@",limit];
                     }
@@ -995,11 +915,21 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     if (sqlite3_prepare_v2(_whc_database, [select_sql UTF8String], -1, &pp_stmt, nil) == SQLITE_OK) {
         int colum_count = sqlite3_column_count(pp_stmt);
         while (sqlite3_step(pp_stmt) == SQLITE_ROW) {
-            id model_object = [model_class new];
+            id model_object = [self autoNewSubmodelWithClass:model_class];
+            if (!model_object) {break;}
             for (int column = 1; column < colum_count; column++) {
                 NSString * field_name = [NSString stringWithCString:sqlite3_column_name(pp_stmt, column) encoding:NSUTF8StringEncoding];
                 WHC_PropertyInfo * property_info = field_dictionary[field_name];
                 if (property_info == nil) continue;
+                id current_model_object = model_object;
+                if ([field_name rangeOfString:@"$"].location != NSNotFound) {
+                    NSString * handle_field_name = [field_name stringByReplacingOccurrencesOfString:@"$" withString:@"."];
+                    NSRange backwards_range = [handle_field_name rangeOfString:@"." options:NSBackwardsSearch];
+                    NSString * key_path = [handle_field_name substringWithRange:NSMakeRange(0, backwards_range.location)];
+                    current_model_object = [model_object valueForKeyPath:key_path];
+                    field_name = [handle_field_name substringFromIndex:backwards_range.length + backwards_range.location];
+                    if (!current_model_object) continue;
+                }
                 switch (property_info.type) {
                     case _Dictionary:
                     case _Array: {
@@ -1010,7 +940,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                             @try {
                                 id set_value = [NSKeyedUnarchiver unarchiveObjectWithData:value];
                                 if (set_value) {
-                                    [model_object setValue:set_value forKey:field_name];
+                                    [current_model_object setValue:set_value forKey:field_name];
                                 }
                             } @catch (NSException *exception) {
                                 [self log:@"query 查询异常 Array/Dictionary 元素没实现NSCoding协议解归档失败"];
@@ -1023,7 +953,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                         if (value > 0) {
                             NSDate * date_value = [NSDate dateWithTimeIntervalSince1970:value];
                             if (date_value) {
-                                [model_object setValue:date_value forKey:field_name];
+                                [current_model_object setValue:date_value forKey:field_name];
                             }
                         }
                     }
@@ -1033,7 +963,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                         const void * blob = sqlite3_column_blob(pp_stmt, column);
                         if (blob != NULL) {
                             NSData * value = [NSData dataWithBytes:blob length:length];
-                            [model_object setValue:value forKey:field_name];
+                            [current_model_object setValue:value forKey:field_name];
                         }
                     }
                         break;
@@ -1041,51 +971,38 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                         const unsigned char * text = sqlite3_column_text(pp_stmt, column);
                         if (text != NULL) {
                             NSString * value = [NSString stringWithCString:(const char *)text encoding:NSUTF8StringEncoding];
-                            [model_object setValue:value forKey:field_name];
+                            [current_model_object setValue:value forKey:field_name];
                         }
                     }
                         break;
                     case _Number: {
                         double value = sqlite3_column_double(pp_stmt, column);
-                        [model_object setValue:@(value) forKey:field_name];
-                    }
-                        break;
-                    case _Model: {
-                        sqlite3_int64 value = sqlite3_column_int64(pp_stmt, column);
-                        [model_object setValue:@(value) forKey:field_name];
+                        [current_model_object setValue:@(value) forKey:field_name];
                     }
                         break;
                     case _Int: {
                         sqlite3_int64 value = sqlite3_column_int64(pp_stmt, column);
-                        if (sub_model_name != nil && sub_model_name.length > 0) {
-                            if ([sub_model_name rangeOfString:field_name].location == NSNotFound) {
-                                ((void (*)(id, SEL, int64_t))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
-                            }else {
-                                [model_object setValue:@(value) forKey:field_name];
-                            }
-                        }else {
-                            ((void (*)(id, SEL, int64_t))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
-                        }
+                        ((void (*)(id, SEL, int64_t))(void *) objc_msgSend)((id)current_model_object, property_info.setter, value);
                     }
                         break;
                     case _Float: {
                         double value = sqlite3_column_double(pp_stmt, column);
-                        ((void (*)(id, SEL, float))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
+                        ((void (*)(id, SEL, float))(void *) objc_msgSend)((id)current_model_object, property_info.setter, value);
                     }
                         break;
                     case _Double: {
                         double value = sqlite3_column_double(pp_stmt, column);
-                        ((void (*)(id, SEL, double))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
+                        ((void (*)(id, SEL, double))(void *) objc_msgSend)((id)current_model_object, property_info.setter, value);
                     }
                         break;
                     case _Char: {
                         int value = sqlite3_column_int(pp_stmt, column);
-                        ((void (*)(id, SEL, int))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
+                        ((void (*)(id, SEL, int))(void *) objc_msgSend)((id)current_model_object, property_info.setter, value);
                     }
                         break;
                     case _Boolean: {
                         int value = sqlite3_column_int(pp_stmt, column);
-                        ((void (*)(id, SEL, int))(void *) objc_msgSend)((id)model_object, property_info.setter, value);
+                        ((void (*)(id, SEL, int))(void *) objc_msgSend)((id)current_model_object, property_info.setter, value);
                     }
                         break;
                     default:
@@ -1098,97 +1015,21 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
         [self log:@"Sorry查询语句异常,建议检查查询条件Sql语句语法是否正确"];
     }
     sqlite3_finalize(pp_stmt);
-    [self close];
     return model_object_array;
 }
 
-+ (NSDictionary *)modifyAssistQuery:(Class)model_class where:(NSString *)where {
-    if ([self openTable:model_class]) {
-        NSString * table_name = NSStringFromClass(model_class);
-        NSString * select_sql = [NSString stringWithFormat:@"SELECT * FROM %@",table_name];
-        if (where != nil && where.length > 0) {
-            select_sql = [select_sql stringByAppendingFormat:@" WHERE %@",where];
-        }
-        NSDictionary * sub_model_class_info = [self scanSubModelClass:model_class];
-        NSMutableString * sub_model_name = [NSMutableString new];
-        [sub_model_class_info enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-            [sub_model_name appendString:key];
-            [sub_model_name appendString:@" "];
-        }];
-        if (sub_model_name.length > 0) {
-            [sub_model_name deleteCharactersInRange:NSMakeRange(sub_model_name.length - 1, 1)];
-            NSMutableArray * model_object_array = [NSMutableArray array];
-            sqlite3_stmt * pp_stmt = nil;
-            if (sqlite3_prepare_v2(_whc_database, [select_sql UTF8String], -1, &pp_stmt, nil) == SQLITE_OK) {
-                while (sqlite3_step(pp_stmt) == SQLITE_ROW) {
-                    int colum_count = sqlite3_column_count(pp_stmt);
-                    NSMutableDictionary * sub_model_id_info = [NSMutableDictionary dictionary];
-                    for (int column = 1; column < colum_count; column++) {
-                        NSString * field_name = [NSString stringWithCString:sqlite3_column_name(pp_stmt, column) encoding:NSUTF8StringEncoding];
-                        if ([sub_model_name rangeOfString:field_name].location != NSNotFound) {
-                            sqlite3_int64 sub_id = sqlite3_column_int64(pp_stmt, column);
-                            [sub_model_id_info setObject:@(sub_id) forKey:field_name];
-                        }
-                    }
-                    [model_object_array addObject:sub_model_id_info];
-                }
-            }else {
-                [self log:@"Sorry查询语句异常,建议先检查Where条件sql语句语法是否正确"];
-            }
-            sqlite3_finalize(pp_stmt);
-            [self close];
-            return @{sub_model_name: model_object_array};
-        }
-    }
-    return @{};
-}
 
-+ (id)querySubModel:(Class)model_class conditions:(NSArray *)conditions queryType:(WHC_QueryType)query_type {
-    NSDictionary * sub_model_class_info = [self scanSubModelClass:model_class];
-    NSMutableString * sub_model_name = [NSMutableString new];
-    [sub_model_class_info enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-        [sub_model_name appendString:key];
-        [sub_model_name appendString:@" "];
-    }];
-    if (sub_model_name.length > 0) {
-        [sub_model_name deleteCharactersInRange:NSMakeRange(sub_model_name.length - 1, 1)];
-    }
-    NSArray * model_array = [self commonQuery:model_class conditions:conditions subModelName:sub_model_name queryType:query_type];
-    NSObject * model = nil;
-    if (model_array.count > 0) {
-        model = model_array.lastObject;
-    }
-    if (model != nil) {
-        [sub_model_class_info enumerateKeysAndObjectsUsingBlock:^(NSString * name, NSString * obj, BOOL * _Nonnull stop) {
-            Class sub_model_class = NSClassFromString(obj);
-            id sub_model = [self querySubModel:sub_model_class conditions:@[[NSString stringWithFormat:@"%@ = %d",[self getMainKeyWithClass:sub_model_class],[[model valueForKey:name] intValue]]] queryType:_Where];
-            [model setValue:sub_model forKey:name];
-        }];
-    }
-    return model;
++ (NSArray *)startQuery:(Class)model_class conditions:(NSArray *)conditions queryType:(WHC_QueryType)query_type {
+    if (![self openTable:model_class]) return @[];
+    NSArray * model_object_array = [self commonQuery:model_class conditions:conditions queryType:query_type];
+    [self close];
+    return model_object_array;
 }
 
 + (NSArray *)queryModel:(Class)model_class conditions:(NSArray *)conditions queryType:(WHC_QueryType)query_type {
     if (![self localNameWithModel:model_class]) {return @[];}
     dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
-    [[self shareInstance].sub_model_info removeAllObjects];
-    NSDictionary * sub_model_class_info = [self scanSubModelClass:model_class];
-    NSMutableString * sub_model_name = [NSMutableString new];
-    [sub_model_class_info enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-        [sub_model_name appendString:key];
-        [sub_model_name appendString:@" "];
-    }];
-    if (sub_model_name.length > 0) {
-        [sub_model_name deleteCharactersInRange:NSMakeRange(sub_model_name.length - 1, 1)];
-    }
-    NSArray * model_array = [self commonQuery:model_class conditions:conditions subModelName:sub_model_name queryType:query_type];
-    [model_array enumerateObjectsUsingBlock:^(NSObject * model, NSUInteger idx, BOOL * _Nonnull stop) {
-        [sub_model_class_info enumerateKeysAndObjectsUsingBlock:^(NSString * name, NSString * obj, BOOL * _Nonnull stop) {
-            Class sub_model_class = NSClassFromString(obj);
-            id sub_model = [self querySubModel:sub_model_class conditions:@[[NSString stringWithFormat:@"%@ = %d",[self getMainKeyWithClass:sub_model_class],[[model valueForKey:name] intValue]]] queryType:_Where];
-            [model setValue:sub_model forKey:name];
-        }];
-    }];
+    NSArray * model_array = [self startQuery:model_class conditions:conditions queryType:query_type];
     dispatch_semaphore_signal([self shareInstance].dsema);
     return model_array;
 }
@@ -1231,36 +1072,43 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                                                      limit == nil ? @"" : limit] queryType:_WhereOrderLimit];
 }
 
-+ (void)updateSubModel:(id)sub_model_object where:(NSString *)where subModelName:(NSString *)sub_model_name {
-    if (sub_model_object == nil) return;
-    Class sum_model_class = [sub_model_object class];
-    if (![self openTable:sum_model_class]) return;
+
++ (BOOL)updateModel:(id)model_object where:(NSString *)where {
+    if (model_object == nil) return NO;
+    Class model_class = [model_object class];
+    if (![self openTable:model_class]) return NO;
     sqlite3_stmt * pp_stmt = nil;
-    NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:sum_model_class];
-    NSString * table_name = NSStringFromClass(sum_model_class);
+    NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:model_class];
+    NSString * table_name = NSStringFromClass(model_class);
     __block NSString * update_sql = [NSString stringWithFormat:@"UPDATE %@ SET ",table_name];
     
     NSArray * field_array = field_dictionary.allKeys;
     NSMutableArray * update_field_array = [NSMutableArray array];
     [field_array enumerateObjectsUsingBlock:^(id  _Nonnull field, NSUInteger idx, BOOL * _Nonnull stop) {
-        WHC_PropertyInfo * property_info = field_dictionary[field];
-        if (property_info.type != _Model) {
-            update_sql = [update_sql stringByAppendingFormat:@"%@ = ?,",field];
-            [update_field_array addObject:field];
-        }
+        update_sql = [update_sql stringByAppendingFormat:@"%@ = ?,",field];
+        [update_field_array addObject:field];
     }];
     update_sql = [update_sql substringWithRange:NSMakeRange(0, update_sql.length - 1)];
     if (where != nil && where.length > 0) {
-        update_sql = [update_sql stringByAppendingFormat:@" WHERE %@", where];
+        update_sql = [update_sql stringByAppendingFormat:@" WHERE %@", [self handleWhere:where]];
     }
     if (sqlite3_prepare_v2(_whc_database, [update_sql UTF8String], -1, &pp_stmt, nil) == SQLITE_OK) {
         [field_array enumerateObjectsUsingBlock:^(id  _Nonnull field, NSUInteger idx, BOOL * _Nonnull stop) {
             WHC_PropertyInfo * property_info = field_dictionary[field];
+            id current_model_object = model_object;
+            if ([field rangeOfString:@"$"].location != NSNotFound) {
+                NSString * handle_field_name = [field stringByReplacingOccurrencesOfString:@"$" withString:@"."];
+                NSRange backwards_range = [handle_field_name rangeOfString:@"." options:NSBackwardsSearch];
+                NSString * key_path = [handle_field_name substringWithRange:NSMakeRange(0, backwards_range.location)];
+                current_model_object = [model_object valueForKeyPath:key_path];
+                field = [handle_field_name substringFromIndex:backwards_range.location + backwards_range.length];
+                if (!current_model_object) return;
+            }
             int index = (int)[update_field_array indexOfObject:field] + 1;
             switch (property_info.type) {
                 case _Dictionary:
                 case _Array: {
-                    id value = [sub_model_object valueForKey:field];
+                    id value = [current_model_object valueForKey:field];
                     if (value == nil) {
                         value = property_info.type == _Dictionary ? [NSDictionary dictionary] : [NSArray array];
                     }
@@ -1273,7 +1121,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                 }
                     break;
                 case _Date: {
-                    NSDate * value = [sub_model_object valueForKey:field];
+                    NSDate * value = [current_model_object valueForKey:field];
                     if (value == nil) {
                         sqlite3_bind_double(pp_stmt, index, 0.0);
                     }else {
@@ -1282,7 +1130,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                 }
                     break;
                 case _Data: {
-                    NSData * value = [sub_model_object valueForKey:field];
+                    NSData * value = [current_model_object valueForKey:field];
                     if (value == nil) {
                         value = [NSData data];
                     }
@@ -1290,7 +1138,7 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                 }
                     break;
                 case _String: {
-                    NSString * value = [sub_model_object valueForKey:field];
+                    NSString * value = [current_model_object valueForKey:field];
                     if (value == nil) {
                         value = @"";
                     }
@@ -1302,42 +1150,37 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
                 }
                     break;
                 case _Number: {
-                    NSNumber * value = [sub_model_object valueForKey:field];
+                    NSNumber * value = [current_model_object valueForKey:field];
                     if (value == nil) {
                         value = @(0.0);
                     }
-                    if (property_info.type != _Model) {
-                        sqlite3_bind_double(pp_stmt, index, [value doubleValue]);
-                    }
+                    sqlite3_bind_double(pp_stmt, index, [value doubleValue]);
                 }
                     break;
                 case _Int: {
-                    if (sub_model_name &&
-                        [sub_model_name rangeOfString:field].location != NSNotFound){} else {
-                        /* 32bit os type issue
-                         long value = ((long (*)(id, SEL))(void *) objc_msgSend)((id)sub_model_object, property_info.getter);*/
-                        NSNumber * value = [sub_model_object valueForKey:field];
-                        sqlite3_bind_int64(pp_stmt, index, (sqlite3_int64)[value longLongValue]);
-                    }
+                    /* 32bit os type issue
+                     long value = ((long (*)(id, SEL))(void *) objc_msgSend)((id)sub_model_object, property_info.getter);*/
+                    NSNumber * value = [current_model_object valueForKey:field];
+                    sqlite3_bind_int64(pp_stmt, index, (sqlite3_int64)[value longLongValue]);
                 }
                     break;
                 case _Char: {
-                    char value = ((char (*)(id, SEL))(void *) objc_msgSend)((id)sub_model_object, property_info.getter);
+                    char value = ((char (*)(id, SEL))(void *) objc_msgSend)((id)current_model_object, property_info.getter);
                     sqlite3_bind_int(pp_stmt, index, value);
                 }
                     break;
                 case _Float: {
-                    float value = ((float (*)(id, SEL))(void *) objc_msgSend)((id)sub_model_object, property_info.getter);
+                    float value = ((float (*)(id, SEL))(void *) objc_msgSend)((id)current_model_object, property_info.getter);
                     sqlite3_bind_double(pp_stmt, index, value);
                 }
                     break;
                 case _Double: {
-                    double value = ((double (*)(id, SEL))(void *) objc_msgSend)((id)sub_model_object, property_info.getter);
+                    double value = ((double (*)(id, SEL))(void *) objc_msgSend)((id)current_model_object, property_info.getter);
                     sqlite3_bind_double(pp_stmt, index, value);
                 }
                     break;
                 case _Boolean: {
-                    BOOL value = ((BOOL (*)(id, SEL))(void *) objc_msgSend)((id)sub_model_object, property_info.getter);
+                    BOOL value = ((BOOL (*)(id, SEL))(void *) objc_msgSend)((id)current_model_object, property_info.getter);
                     sqlite3_bind_int(pp_stmt, index, value);
                 }
                     break;
@@ -1349,92 +1192,58 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
         sqlite3_finalize(pp_stmt);
     }else {
         [self log:@"更新失败"];
+        return NO;
     }
     [self close];
+    return YES;
 }
 
-+ (void)updateModel:(id)model_object where:(NSString *)where {
-    [self updateSubModel:model_object where:where subModelName:nil];
-    NSDictionary * queryDictionary = [self modifyAssistQuery:[model_object class] where:where];
-    if (queryDictionary.count > 0) {
-        NSArray * model_object_array = queryDictionary.allValues.lastObject;
-        [model_object_array enumerateObjectsUsingBlock:^(NSDictionary * sub_model_id_info, NSUInteger idx, BOOL * _Nonnull stop) {
-            [sub_model_id_info.allKeys enumerateObjectsUsingBlock:^(NSString * field_name, NSUInteger idx, BOOL * _Nonnull stop) {
-                id sub_model = [model_object valueForKey:field_name];
-                if (sub_model) {
-                    [self updateModel:sub_model where:[NSString stringWithFormat:@"%@ = %@",[self getMainKeyWithClass:[sub_model class]],sub_model_id_info[field_name]]];
-                }
-            }];
-        }];
-    }
-}
-
-+ (void)update:(id)model_object where:(NSString *)where {
++ (BOOL)update:(id)model_object where:(NSString *)where {
+    BOOL result = YES;
     if ([self localNameWithModel:[model_object class]]) {
         dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
         @autoreleasepool {
-            [[self shareInstance].sub_model_info removeAllObjects];
-            [self updateModel:model_object where:where];
+            result = [self updateModel:model_object where:where];
         }
         dispatch_semaphore_signal([self shareInstance].dsema);
+    }else {
+        result = NO;
     }
+    return result;
 }
 
-+ (void)clear:(Class)model_class {
-    [self delete:model_class where:nil];
++ (BOOL)clear:(Class)model_class {
+    return [self delete:model_class where:nil];
 }
 
 + (BOOL)commonDeleteModel:(Class)model_class where:(NSString *)where {
-    BOOL result = NO;
+    BOOL result = YES;
     if ([self localNameWithModel:model_class]) {
         if ([self openTable:model_class]) {
             NSString * table_name = NSStringFromClass(model_class);
             NSString * delete_sql = [NSString stringWithFormat:@"DELETE FROM %@",table_name];
             if (where != nil && where.length > 0) {
-                delete_sql = [delete_sql stringByAppendingFormat:@" WHERE %@",where];
+                delete_sql = [delete_sql stringByAppendingFormat:@" WHERE %@",[self handleWhere:where]];
             }
             result = [self execSql:delete_sql];
             [self close];
+        }else {
+            result = NO;
         }
+    }else {
+        result = NO;
     }
     return result;
 }
 
-+ (void)deleteModel:(Class)model_class where:(NSString *)where {
-    if (where != nil && where.length > 0) {
-        NSDictionary * queryDictionary = [self modifyAssistQuery:model_class where:where];
-        NSDictionary * subModelInfo = [self scanSubModelClass:model_class];
-        if (queryDictionary.count > 0) {
-            NSArray * model_object_array = queryDictionary.allValues.lastObject;
-            if ([self commonDeleteModel:model_class where:where]) {
-                [model_object_array enumerateObjectsUsingBlock:^(NSDictionary * sub_model_id_info, NSUInteger idx, BOOL * _Nonnull stop) {
-                    [sub_model_id_info.allKeys enumerateObjectsUsingBlock:^(NSString * field_name, NSUInteger idx, BOOL * _Nonnull stop) {
-                        Class sub_model_class = NSClassFromString(subModelInfo[field_name]);
-                        [self deleteModel:sub_model_class where:[NSString stringWithFormat:@"%@ = %@",[self getMainKeyWithClass:sub_model_class],sub_model_id_info[field_name]]];
-                    }];
-                }];
-            }
-        }else {
-            goto DELETE;
-        }
-    }else {
-    DELETE:
-        if ([self commonDeleteModel:model_class where:where]) {
-            NSDictionary * sub_model_class_info = [self scanSubModelClass:model_class];
-            [sub_model_class_info enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-                [self deleteModel:NSClassFromString(obj) where:where];
-            }];
-        }
-    }
-}
-
-+ (void)delete:(Class)model_class where:(NSString *)where {
++ (BOOL)delete:(Class)model_class where:(NSString *)where {
+    BOOL result = YES;
     dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
     @autoreleasepool {
-        [[self shareInstance].sub_model_info removeAllObjects];
-        [self deleteModel:model_class where:where];
+        result = [self commonDeleteModel:model_class where:where];
     }
     dispatch_semaphore_signal([self shareInstance].dsema);
+    return result;
 }
 
 + (void)close {
@@ -1464,26 +1273,12 @@ static NSInteger _NO_HANDLE_KEY_ID = -2;
     dispatch_semaphore_signal([self shareInstance].dsema);
 }
 
-+ (void)removeSubModel:(Class)model_class {
-    NSFileManager * file_manager = [NSFileManager defaultManager];
-    NSDictionary * sub_model_class_info = [self scanSubModelClass:model_class];
-    [sub_model_class_info enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-        Class sub_model_calss = NSClassFromString(obj);
-        [self removeSubModel:sub_model_calss];
-        NSString * file_path = [self localPathWithModel:sub_model_calss];
-        if (file_path) {
-            [file_manager removeItemAtPath:file_path error:nil];
-        }
-    }];
-}
-
 + (void)removeModel:(Class)model_class {
     dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
     @autoreleasepool {
         NSFileManager * file_manager = [NSFileManager defaultManager];
         NSString * file_path = [self localPathWithModel:model_class];
         if (file_path) {
-            [self removeSubModel:model_class];
             [file_manager removeItemAtPath:file_path error:nil];
         }
     }

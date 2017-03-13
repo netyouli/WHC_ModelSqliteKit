@@ -102,7 +102,8 @@
     
     /// 1.1查询上面存储的模型对象
         // where 参数为空查询所有, 查询语法和sql 语句一样
-    NSArray * personArray = [WHC_ModelSqlite query:[Person class] where:@"name != '吴海超'"];
+    NSArray * personArray = [WHC_ModelSqlite query:[Person class]
+                                             where:@"name = '吴海超' and car.name = '宝马' or school.city.name = '北京'"];
     [personArray enumerateObjectsUsingBlock:^(Person *  _Nonnull person, NSUInteger idx, BOOL * _Nonnull stop) {
         NSLog(@"第%lu条数据",(unsigned long)idx);
         NSLog(@"name = %@",person.name);
