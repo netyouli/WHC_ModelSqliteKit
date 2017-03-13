@@ -1096,19 +1096,20 @@ static sqlite3 * _whc_database;
         [field_array enumerateObjectsUsingBlock:^(id  _Nonnull field, NSUInteger idx, BOOL * _Nonnull stop) {
             WHC_PropertyInfo * property_info = field_dictionary[field];
             id current_model_object = model_object;
+            NSString * actual_field = field;
             if ([field rangeOfString:@"$"].location != NSNotFound) {
                 NSString * handle_field_name = [field stringByReplacingOccurrencesOfString:@"$" withString:@"."];
                 NSRange backwards_range = [handle_field_name rangeOfString:@"." options:NSBackwardsSearch];
                 NSString * key_path = [handle_field_name substringWithRange:NSMakeRange(0, backwards_range.location)];
                 current_model_object = [model_object valueForKeyPath:key_path];
-                field = [handle_field_name substringFromIndex:backwards_range.location + backwards_range.length];
-                if (!current_model_object) return;
+                actual_field = [handle_field_name substringFromIndex:backwards_range.location + backwards_range.length];
+                if (!current_model_object) {*stop = YES;}
             }
             int index = (int)[update_field_array indexOfObject:field] + 1;
             switch (property_info.type) {
                 case _Dictionary:
                 case _Array: {
-                    id value = [current_model_object valueForKey:field];
+                    id value = [current_model_object valueForKey:actual_field];
                     if (value == nil) {
                         value = property_info.type == _Dictionary ? [NSDictionary dictionary] : [NSArray array];
                     }
@@ -1121,7 +1122,7 @@ static sqlite3 * _whc_database;
                 }
                     break;
                 case _Date: {
-                    NSDate * value = [current_model_object valueForKey:field];
+                    NSDate * value = [current_model_object valueForKey:actual_field];
                     if (value == nil) {
                         sqlite3_bind_double(pp_stmt, index, 0.0);
                     }else {
@@ -1130,7 +1131,7 @@ static sqlite3 * _whc_database;
                 }
                     break;
                 case _Data: {
-                    NSData * value = [current_model_object valueForKey:field];
+                    NSData * value = [current_model_object valueForKey:actual_field];
                     if (value == nil) {
                         value = [NSData data];
                     }
@@ -1138,7 +1139,7 @@ static sqlite3 * _whc_database;
                 }
                     break;
                 case _String: {
-                    NSString * value = [current_model_object valueForKey:field];
+                    NSString * value = [current_model_object valueForKey:actual_field];
                     if (value == nil) {
                         value = @"";
                     }
@@ -1150,7 +1151,7 @@ static sqlite3 * _whc_database;
                 }
                     break;
                 case _Number: {
-                    NSNumber * value = [current_model_object valueForKey:field];
+                    NSNumber * value = [current_model_object valueForKey:actual_field];
                     if (value == nil) {
                         value = @(0.0);
                     }
@@ -1160,7 +1161,7 @@ static sqlite3 * _whc_database;
                 case _Int: {
                     /* 32bit os type issue
                      long value = ((long (*)(id, SEL))(void *) objc_msgSend)((id)sub_model_object, property_info.getter);*/
-                    NSNumber * value = [current_model_object valueForKey:field];
+                    NSNumber * value = [current_model_object valueForKey:actual_field];
                     sqlite3_bind_int64(pp_stmt, index, (sqlite3_int64)[value longLongValue]);
                 }
                     break;
