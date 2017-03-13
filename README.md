@@ -28,7 +28,8 @@ WHC_ModelSqliteKit
 ==============
 ```objective-c
 /// 查询person名称为吴海超，并且person的汽车对象的名称为宝马或者person对象学校对象的所在城市对象的名称为北京
-NSArray * result = [WHC_ModelSqlite query:[Person class] where:@"name = '吴海超' and car.name = '宝马' or school.city.name = '北京'"];
+NSArray * result = [WHC_ModelSqlite query:[Person class] 
+        where:@"name = '吴海超' and car.name = '宝马' or school.city.name = '北京'"];
 ```
 
 要求
