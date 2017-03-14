@@ -1193,6 +1193,7 @@ static sqlite3 * _whc_database;
         sqlite3_finalize(pp_stmt);
     }else {
         [self log:@"更新失败"];
+        [self close];
         return NO;
     }
     [self close];

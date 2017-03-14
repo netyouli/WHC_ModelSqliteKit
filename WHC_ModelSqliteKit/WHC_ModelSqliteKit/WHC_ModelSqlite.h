@@ -29,6 +29,8 @@
 
 #import <Foundation/Foundation.h>
 
+#define WHCSqlite ([WHC_ModelSqlite class])
+
 /// 数据库协议信息
 @protocol WHC_SqliteInfo <NSObject>
 @optional
