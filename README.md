@@ -28,7 +28,7 @@ WHC_ModelSqliteKit
 ==============
 ```objective-c
 /// 查询person名称为吴海超，并且person的汽车对象的名称为宝马或者person对象学校对象的所在城市对象的名称为北京
-NSArray * result = [WHC_ModelSqlite query:[Person class] 
+NSArray * result = [WHCSqlite query:[Person class] 
         where:@"name = '吴海超' and car.name = '宝马' or school.city.name = '北京'"];
 ```
 
@@ -118,72 +118,72 @@ whc.carArray = @[tempCar];
 whc.dict = @{@"1":@"2"};
 whc.dictCar = @{@"car": tempCar};
 
-[WHC_ModelSqlite insert:whc];
+[WHCSqlite insert:whc];
 ```
 
 ####2.存储批量模型对象到数据库演示
 ```objective-c
 NSArray * persons = [self makeArrayPerson];
-[WHC_ModelSqlite inserts:persons];
+[WHCSqlite inserts:persons];
 ```
 
 ####3.无条件查询(查询所有记录)数据库中模型类演示
 ```objective-c
-NSArray * personArray = [WHC_ModelSqlite query:[Person class]];
+NSArray * personArray = [WHCSqlite query:[Person class]];
 ```
 
 ####4.条件查询数据库中模型类演示(where 条件查询语法和sql where条件查询语法一样)
 ```objective-c
-NSArray * personArray = [WHC_ModelSqlite query:[Person class] where:@"name = '吴海超2' OR age <= 18"];
+NSArray * personArray = [WHCSqlite query:[Person class] where:@"name = '吴海超2' OR age <= 18"];
 ```
 
 ####5.查询数据库并对结果排序
 ```objective-c
 ///对person数据表查询并且根据age自动降序或者升序排序
-[WHC_ModelSqlite query:[Person class] order:@"by age desc/asc"];
+[WHCSqlite query:[Person class] order:@"by age desc/asc"];
 ```
 
 ####6.查询数据库并对结果限制查询条数
 ```objective-c
 /// 对person数据表查询并且并且限制查询数量为8
-[WHC_ModelSqlite query:[Person class] limit:@"8"];
+[WHCSqlite query:[Person class] limit:@"8"];
 
 /// 对person数据表查询并且对查询列表偏移8并且限制查询数量为8
-[WHC_ModelSqlite query:[Person class] limit:@"8 offset 8"];
+[WHCSqlite query:[Person class] limit:@"8 offset 8"];
 
 ```
 
 ####7.修改数据库中模型对象演示(where 条件查询语法和sql where条件查询语法一样) 
 ```objective-c
-[WHC_ModelSqlite update:whc where:@"name = '吴海超2' OR age <= 18"];
+[WHCSqlite update:whc where:@"name = '吴海超2' OR age <= 18"];
 ```
 ####8.删除数据库中模型对象演示(where条件查询为空则删除所有)
 ```objective-c
-[WHC_ModelSqlite delete:[Person class] where:@"age = 25 AND name = '吴海超'"];
+[WHCSqlite delete:[Person class] where:@"age = 25 AND name = '吴海超'"];
 ```
 
 ####9.清空指定数据库演示
 ```objective-c
-[WHC_ModelSqlite clear:[Person class]];
+[WHCSqlite clear:[Person class]];
 ```
 
 ####10.删除数据库演示
 ```objective-c
-[WHC_ModelSqlite removeModel:[Person class]];
+[WHCSqlite removeModel:[Person class]];
 ```
 
 ####11.删除所有数据库演示
 ```objective-c
-[WHC_ModelSqlite removeAllModel];
+[WHCSqlite removeAllModel];
 ```
 
 ####12.获取数据库本地路径演示
 ```objective-c
-NSString * path = [WHC_ModelSqlite localPathWithModel:[Person class]];
+NSString * path = [WHCSqlite localPathWithModel:[Person class]];
 ```
 ####13.获取数据库本地版本号演示
 ```objective-c
-NSString * path = [WHC_ModelSqlite versionWithModel:[Person class]];
+NSString * path = [WHCSqlite versionWithModel:[Person class]];
 ```
 
 ## <a id="期待"></a>期待
