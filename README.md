@@ -19,6 +19,7 @@ WHC_ModelSqliteKit
 - **易用**: 真正实现一行代码操作数据库
 - **目标**: 替代直接使用Sqlite和CoreData以及FMDB低效率方式
 - **支持**: (NSArray,NSDictionary,NSDate,NSData,NSString,NSNumber,Int,double,float,Bool,char)类型
+- **灵活**: 支持使用Sqlite函数进行查询,支持忽略模型类属性存储数据表中
 - **强大**: 支持模型嵌套继承模型类存储到数据库和多表嵌套复杂查询
 - **智能**: 根据数据库模型类实现的WHC_SqliteInfo协议返回的版本号来智能更新数据库字段(动态删除/添加)
 - **咨询**: 712641411
@@ -52,6 +53,7 @@ NSArray * result = [WHCSqlite query:[Person class]
 * 在需要对数据表自定义信息需要model类实现WHC_SqliteInfo协议
 - 当模型类有新增/删除属性的时候需要在模型类里定义类方法whc_SqliteVersion方法修改模型类(数据库)版本号来表明有字段更新操作，库会根据这个VERSION变更智能检查并自动更新数据库字段，无需手动更新数据库字段
 - 当存储NSArray/NSDictionary属性并且里面是自定义模型对象时，模型对象必须实现NSCoding协议，可以使用[WHC_Model](https://github.com/netyouli/WHC_Model)库一行代码实现NSCoding相关代码
+- 当需要模型类忽略属性存储数据表时实现whc_SqliteMainkey协议方法即可return要忽略属性名称数组
 ```objective-c
 /// 数据库协议信息
 @protocol WHC_SqliteInfo <NSObject>
@@ -76,6 +78,13 @@ NSArray * result = [WHCSqlite query:[Person class]
 *** 返回自定义主键名称默认主键:_id ***
 */
 + (NSString *)whc_SqliteMainkey;
+
+/**
+忽略属性集合
+
+@return 返回忽略属性集合
+*/
++ (NSArray *)whc_IgnorePropertys;
 
 @end
 ```
@@ -130,6 +139,27 @@ NSArray * persons = [self makeArrayPerson];
 ####3.无条件查询(查询所有记录)数据库中模型类演示
 ```objective-c
 NSArray * personArray = [WHCSqlite query:[Person class]];
+
+```
+
+####3.1.使用Sqlite函数查询数据库演示
+```objective-c
+/// 获取Person表所有name和name长度
+NSArray * nameArray = [WHCSqlite query:[Person class] func:@"name, length(name)"];
+NSLog(@"nameArray = %@",nameArray);
+
+/// 获取Person表最大age值
+NSNumber * maxAge = [WHCSqlite query:[Person class] func:@"max(age)"];
+NSLog(@"maxAge = %@",maxAge);
+
+/// 获取Person表总记录数
+NSNumber * sumCount = [WHCSqlite query:[Person class] func:@"count(*)"];
+NSLog(@"sumCount = %@",sumCount);
+
+/// 获取Person表字段school.city.name = 北京--0,总记录数
+sumCount = [WHCSqlite query:[Person class] func:@"count(*)" condition:@"where school.city.name = '北京--0'"];
+NSLog(@"sumCount = %@",sumCount);
+
 ```
 
 ####4.条件查询数据库中模型类演示(where 条件查询语法和sql where条件查询语法一样)
@@ -200,14 +230,30 @@ Api文档
 * @param model_array 模型数组对象(model_array 里对象类型要一致)
 */
 
-+ (void)inserts:(NSArray *)model_array;
++ (BOOL)inserts:(NSArray *)model_array;
 
 /**
 * 说明: 存储模型到本地
 * @param model_object 模型对象
 */
 
-+ (void)insert:(id)model_object;
++ (BOOL)insert:(id)model_object;
+
+
+/**
+* 说明: 获取模型类表总条数
+* @param model_class 模型类
+* @return 总条数
+*/
++ (NSUInteger)count:(Class)model_class;
+
+/**
+* 说明: 查询本地模型对象
+* @param model_class 模型类
+* @return 查询模型对象数组
+*/
+
++ (NSArray *)query:(Class)model_class;
 
 /**
 * 说明: 查询本地模型对象
@@ -304,19 +350,42 @@ Api文档
 + (NSArray *)query:(Class)model_class where:(NSString *)where order:(NSString *)order limit:(NSString *)limit;
 
 /**
+* 说明: 利用sqlite 函数进行查询
+
+* @param model_class 要查询模型类
+* @param sqliteFunc sqlite函数例如：（MAX(age),MIN(age),COUNT(*)....）
+* @return 返回查询结果(如果结果条数 > 1返回Array , = 1返回单个值 , = 0返回nil)
+* /// example: [WHC_ModelSqlite query:[Person class] sqliteFunc:@"max(age)"];  /// 获取Person表的最大age值
+* /// example: [WHC_ModelSqlite query:[Person class] sqliteFunc:@"count(*)"];  /// 获取Person表的总记录条数
+*/
++ (id)query:(Class)model_class func:(NSString *)func;
+
+/**
+* 说明: 利用sqlite 函数进行查询
+
+* @param model_class 要查询模型类
+* @param sqliteFunc sqlite函数例如：（MAX(age),MIN(age),COUNT(*)....）
+* @param condition 其他查询条件例如：(where age > 20 order by age desc ....)
+* @return 返回查询结果(如果结果条数 > 1返回Array , = 1返回单个值 , = 0返回nil)
+* /// example: [WHC_ModelSqlite query:[Person class] sqliteFunc:@"max(age)" condition:@"where name = '北京'"];  /// 获取Person表name=北京集合中的的最大age值
+* /// example: [WHC_ModelSqlite query:[Person class] sqliteFunc:@"count(*)" condition:@"where name = '北京'"];  /// 获取Person表name=北京集合中的总记录条数
+*/
++ (id)query:(Class)model_class func:(NSString *)func condition:(NSString *)condition;
+
+/**
 * 说明: 更新本地模型对象
 * @param model_class 模型类
 * @param where 查询条件(查询语法和SQL where 查询语法一样，where为空则更新所有)
 */
 
-+ (void)update:(id)model_object where:(NSString *)where;
++ (BOOL)update:(id)model_object where:(NSString *)where;
 
 /**
 * 说明: 清空本地模型对象
 * @param model_class 模型类
 */
 
-+ (void)clear:(Class)model_class;
++ (BOOL)clear:(Class)model_class;
 
 
 /**
@@ -325,7 +394,7 @@ Api文档
 * @param where 查询条件(查询语法和SQL where 查询语法一样，where为空则删除所有)
 */
 
-+ (void)delete:(Class)model_class where:(NSString *)where;
++ (BOOL)delete:(Class)model_class where:(NSString *)where;
 
 /**
 * 说明: 清空所有本地模型数据库
