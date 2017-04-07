@@ -55,6 +55,14 @@
  */
 + (NSString *)whc_SqliteMainkey;
 
+
+/**
+ 忽略属性集合
+
+ @return 返回忽略属性集合
+ */
++ (NSArray *)whc_IgnorePropertys;
+
 @end
 
 @interface WHC_ModelSqlite : NSObject
@@ -72,6 +80,14 @@
  */
 
 + (BOOL)insert:(id)model_object;
+
+
+/**
+ * 说明: 获取模型类表总条数
+ * @param model_class 模型类
+ * @return 总条数
+ */
++ (NSUInteger)count:(Class)model_class;
 
 /**
  * 说明: 查询本地模型对象
@@ -174,6 +190,29 @@
 /// 对person数据表查询age小于30岁并且根据age自动降序或者升序排序并且限制查询的数量为8偏移为8
 
 + (NSArray *)query:(Class)model_class where:(NSString *)where order:(NSString *)order limit:(NSString *)limit;
+
+/**
+ * 说明: 利用sqlite 函数进行查询
+ 
+ * @param model_class 要查询模型类
+ * @param sqliteFunc sqlite函数例如：（MAX(age),MIN(age),COUNT(*)....）
+ * @return 返回查询结果(如果结果条数 > 1返回Array , = 1返回单个值 , = 0返回nil)
+ * /// example: [WHC_ModelSqlite query:[Person class] sqliteFunc:@"max(age)"];  /// 获取Person表的最大age值
+ * /// example: [WHC_ModelSqlite query:[Person class] sqliteFunc:@"count(*)"];  /// 获取Person表的总记录条数
+ */
++ (id)query:(Class)model_class func:(NSString *)func;
+
+/**
+ * 说明: 利用sqlite 函数进行查询
+ 
+ * @param model_class 要查询模型类
+ * @param sqliteFunc sqlite函数例如：（MAX(age),MIN(age),COUNT(*)....）
+ * @param condition 其他查询条件例如：(where age > 20 order by age desc ....)
+ * @return 返回查询结果(如果结果条数 > 1返回Array , = 1返回单个值 , = 0返回nil)
+ * /// example: [WHC_ModelSqlite query:[Person class] sqliteFunc:@"max(age)" condition:@"where name = '北京'"];  /// 获取Person表name=北京集合中的的最大age值
+ * /// example: [WHC_ModelSqlite query:[Person class] sqliteFunc:@"count(*)" condition:@"where name = '北京'"];  /// 获取Person表name=北京集合中的总记录条数
+ */
++ (id)query:(Class)model_class func:(NSString *)func condition:(NSString *)condition;
 
 /**
  * 说明: 更新本地模型对象

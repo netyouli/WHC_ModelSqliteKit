@@ -51,5 +51,12 @@
 @property (nonatomic, strong) NSArray * carArray;
 @property (nonatomic, strong) NSDictionary * dict;
 @property (nonatomic, strong) NSDictionary * dictCar;
+
+/// 下面是忽略属性
+@property (nonatomic, strong) NSString * ignoreAttr1;
+@property (nonatomic, strong) NSString * ignoreAttr2;
+@property (nonatomic, strong) NSString * ignoreAttr3;
+
 + (NSString *)whc_SqliteVersion;
++ (NSArray *)whc_IgnorePropertys;
 @end

@@ -204,6 +204,13 @@ static sqlite3 * _whc_database;
         NSDictionary * super_fields = [self parserSubModelObjectFieldsWithModelClass:super_class propertyName:main_property_name complete:complete];
         if (need_dictionary_save) [fields setValuesForKeysWithDictionary:super_fields];
     }
+    SEL selector = @selector(whc_IgnorePropertys);
+    NSArray * ignore_propertys;
+    if ([model_class respondsToSelector:selector]) {
+        IMP sqlite_info_func = [model_class methodForSelector:selector];
+        NSArray * (*func)(id, SEL) = (void *)sqlite_info_func;
+        ignore_propertys = func(model_class, selector);
+    }
     unsigned int property_count = 0;
     objc_property_t * propertys = class_copyPropertyList(model_class, &property_count);
     for (int i = 0; i < property_count; i++) {
@@ -211,6 +218,9 @@ static sqlite3 * _whc_database;
         const char * property_name = property_getName(property);
         const char * property_attributes = property_getAttributes(property);
         NSString * property_name_string = [NSString stringWithUTF8String:property_name];
+        if (ignore_propertys && [ignore_propertys containsObject:property_name_string]) {
+            continue;
+        }
         NSString * property_attributes_string = [NSString stringWithUTF8String:property_attributes];
         NSArray * property_attributes_list = [property_attributes_string componentsSeparatedByString:@"\""];
         NSString * name = property_name_string;
@@ -371,7 +381,9 @@ static sqlite3 * _whc_database;
         if (sqlite3_open([database_cache_path UTF8String], &_whc_database) == SQLITE_OK) {
             NSString * psw_key = [self exceSelector:@selector(whc_SqlitePasswordKey) modelClass:model_class];
             if (psw_key && psw_key.length > 0) {
-                [self setKey:psw_key];
+                if (![self setKey:psw_key]) {
+                    [self log:@"给数据库加密失败, 请引入SQLCipher库并配置SQLITE_HAS_CODEC或者pod 'WHC_ModelSqliteKit/SQLCipher'"];
+                }
             }
             NSArray * old_model_field_name_array = [self getModelFieldNameWithClass:model_class];
             NSDictionary * new_model_info = [self parserModelObjectFieldsWithModelClass:model_class];
@@ -494,7 +506,9 @@ static sqlite3 * _whc_database;
     if (sqlite3_open([database_cache_path UTF8String], &_whc_database) == SQLITE_OK) {
         NSString * psw_key = [self exceSelector:@selector(whc_SqlitePasswordKey) modelClass:model_class];
         if (psw_key && psw_key.length > 0) {
-            [self setKey:psw_key];
+            if (![self setKey:psw_key]) {
+                [self log:@"给数据库加密失败, 请引入SQLCipher库并配置SQLITE_HAS_CODEC或者pod 'WHC_ModelSqliteKit/SQLCipher'"];
+            }
         }
         return [self createTable:model_class];
     }
@@ -692,9 +706,8 @@ static sqlite3 * _whc_database;
                     break;
             }
         }];
-        if (sqlite3_step(pp_stmt) != SQLITE_DONE) {
-            sqlite3_finalize(pp_stmt);
-        }
+        sqlite3_step(pp_stmt);
+        sqlite3_finalize(pp_stmt);
     }else {
         [self log:@"Sorry存储数据失败,建议检查模型类属性类型是否符合规范"];
         return NO;
@@ -724,20 +737,10 @@ static sqlite3 * _whc_database;
 
 
 + (BOOL)insert:(id)model_object {
-    BOOL result = YES;
-    dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
-    @autoreleasepool {
-        if ([self openTable:[model_object class]]) {
-            [self execSql:@"BEGIN TRANSACTION"];
-            result = [self commonInsert:model_object];
-            [self execSql:@"COMMIT"];
-            [self close];
-        }else {
-            result = NO;
-        }
+    if (model_object) {
+        return [self inserts:@[model_object]];
     }
-    dispatch_semaphore_signal([self shareInstance].dsema);
-    return result;
+    return NO;
 }
 
 + (id)autoNewSubmodelWithClass:(Class)model_class {
@@ -766,8 +769,8 @@ static sqlite3 * _whc_database;
 }
 
 + (BOOL)isNumber:(NSString *)cahr {
-    NSScanner *scan = [NSScanner scannerWithString:cahr];
     int value;
+    NSScanner *scan = [NSScanner scannerWithString:cahr];
     return [scan scanInt:&value] && [scan isAtEnd];
 }
 
@@ -1072,6 +1075,118 @@ static sqlite3 * _whc_database;
                                                      limit == nil ? @"" : limit] queryType:_WhereOrderLimit];
 }
 
++ (NSUInteger)count:(Class)model_class {
+    NSNumber * count = [self query:model_class func:@"count(*)"];
+    return count ? count.unsignedIntegerValue : 0;
+}
+
++ (id)query:(Class)model_class func:(NSString *)func {
+    return [self query:model_class func:func condition:nil];
+}
+
++ (id)query:(Class)model_class func:(NSString *)func condition:(NSString *)condition {
+    if (![self localNameWithModel:model_class]) {return nil;}
+    dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
+    if (![self openTable:model_class]) return @[];
+    NSMutableArray * result_array = [NSMutableArray array];
+    @autoreleasepool {
+        NSString * table_name = NSStringFromClass(model_class);
+        if (func == nil || func.length == 0) {
+            [self log:@"发现错误 Sqlite Func 不能为空"];
+            return nil;
+        }
+        if (condition == nil) {
+            condition = @"";
+        }else {
+            condition = [self handleWhere:condition];
+        }
+        NSString * select_sql = [NSString stringWithFormat:@"SELECT %@ FROM %@ %@",func,table_name,condition];
+        sqlite3_stmt * pp_stmt = nil;
+        if (sqlite3_prepare_v2(_whc_database, [select_sql UTF8String], -1, &pp_stmt, nil) == SQLITE_OK) {
+            int colum_count = sqlite3_column_count(pp_stmt);
+            while (sqlite3_step(pp_stmt) == SQLITE_ROW) {
+                NSMutableArray * row_result_array = [NSMutableArray array];
+                for (int column = 0; column < colum_count; column++) {
+                    int column_type = sqlite3_column_type(pp_stmt, column);
+                    switch (column_type) {
+                        case SQLITE_INTEGER: {
+                            sqlite3_int64 value = sqlite3_column_int64(pp_stmt, column);
+                            [row_result_array addObject:@(value)];
+                        }
+                            break;
+                        case SQLITE_FLOAT: {
+                            double value = sqlite3_column_double(pp_stmt, column);
+                            [row_result_array addObject:@(value)];
+                        }
+                            break;
+                        case SQLITE_TEXT: {
+                            const unsigned char * text = sqlite3_column_text(pp_stmt, column);
+                            if (text != NULL) {
+                                NSString * value = [NSString stringWithCString:(const char *)text encoding:NSUTF8StringEncoding];
+                                [row_result_array addObject:value];
+                            }
+                        }
+                            break;
+                        case SQLITE_BLOB: {
+                            int length = sqlite3_column_bytes(pp_stmt, column);
+                            const void * blob = sqlite3_column_blob(pp_stmt, column);
+                            if (blob != NULL) {
+                                NSData * value = [NSData dataWithBytes:blob length:length];
+                                [row_result_array addObject:value];
+                            }
+                        }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                if (row_result_array.count > 0) {
+                    [result_array addObject:row_result_array];
+                }
+            }
+            sqlite3_finalize(pp_stmt);
+        }else {
+            [self log:@"Sorry 查询失败, 建议检查sqlite 函数书写格式是否正确！"];
+        }
+        [self close];
+        if (result_array.count > 0) {
+            NSMutableDictionary * handle_result_dict = [NSMutableDictionary dictionary];
+            [result_array enumerateObjectsUsingBlock:^(NSArray * row_result_array, NSUInteger idx, BOOL * _Nonnull stop) {
+                [row_result_array enumerateObjectsUsingBlock:^(id _Nonnull column_value, NSUInteger idx, BOOL * _Nonnull stop) {
+                    NSString * column_array_key = @(idx).stringValue;
+                    NSMutableArray * column_value_array = handle_result_dict[column_array_key];
+                    if (!column_value_array) {
+                        column_value_array = [NSMutableArray array];
+                        handle_result_dict[column_array_key] = column_value_array;
+                    }
+                    [column_value_array addObject:column_value];
+                }];
+            }];
+            NSArray * all_keys = handle_result_dict.allKeys;
+            NSArray * handle_column_array_key = [all_keys sortedArrayUsingComparator:^NSComparisonResult(NSString * key1, NSString * key2) {
+                NSComparisonResult result = [key1 compare:key2];
+                return result == NSOrderedDescending ? NSOrderedAscending : result;
+            }];
+            [result_array removeAllObjects];
+            if (handle_column_array_key) {
+                [handle_column_array_key enumerateObjectsUsingBlock:^(NSString * key, NSUInteger idx, BOOL * _Nonnull stop) {
+                    [result_array addObject:handle_result_dict[key]];
+                }];
+            }
+        }
+    }
+    dispatch_semaphore_signal([self shareInstance].dsema);
+    if (result_array.count == 1) {
+        NSArray * element = result_array.firstObject;
+        if (element.count > 1){
+            return element;
+        }
+        return element.firstObject;
+    }else if (result_array.count > 1) {
+        return result_array;
+    }
+    return nil;
+}
 
 + (BOOL)updateModel:(id)model_object where:(NSString *)where {
     if (model_object == nil) return NO;

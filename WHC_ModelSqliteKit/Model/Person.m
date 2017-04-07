@@ -31,6 +31,12 @@
 
 @implementation Person
 
++ (NSArray *)whc_IgnorePropertys {
+    return @[@"ignoreAttr1",
+             @"ignoreAttr2",
+             @"ignoreAttr3"];
+}
+
 + (NSString *)whc_SqliteVersion {
     return @"1.0.0";
 }

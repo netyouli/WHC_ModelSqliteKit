@@ -44,7 +44,7 @@
     
     [WHCSqlite removeAllModel];
     
-    /// 1.存储单个模型对象到数据库演示代码
+    /// 1.存储模型对象到数据库演示代码
     Person * person = [Person new];
     person.name = @"吴海超";
     person.age = 25;
@@ -85,6 +85,7 @@
     person.school.city.personCount = 1000;
 
     /// 线程安全测试
+    
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         person.name = @"武汉";
         [WHCSqlite insert:person];
@@ -96,9 +97,23 @@
         [WHCSqlite insert:person];
         NSLog(@"线程2.存储单个模型对象到数据库演示代码");
     });
-    
+
     [WHCSqlite insert:person];
     NSLog(@"线程3.存储单个模型对象到数据库演示代码");
+    
+    /// 获取Person表所有name和name长度
+    NSArray * nameArray = [WHCSqlite query:[Person class] func:@"name, length(name)"];
+    NSLog(@"nameArray = %@",nameArray);
+    
+    /// 获取Person表最大age值
+    NSNumber * maxAge = [WHCSqlite query:[Person class] func:@"max(age)"];
+    NSLog(@"maxAge = %@",maxAge);
+    
+    /// 获取Person表总记录数
+    NSNumber * sumCount = [WHCSqlite query:[Person class] func:@"count(*)"];
+    NSLog(@"sumCount = %@",sumCount);
+    
+    NSArray * personss = [WHCSqlite query:[Person class]];
     
     /// 1.1查询上面存储的模型对象
         // where 参数为空查询所有, 查询语法和sql 语句一样
@@ -121,6 +136,10 @@
     NSArray * persons = [self makeArrayPerson];
     [WHCSqlite inserts:persons];
     NSLog(@"2.批量存储模型对象到数据库演示代码");
+    
+    /// 获取Person表字段name = 北京总记录数
+    sumCount = [WHCSqlite query:[Person class] func:@"count(*)" condition:@"where school.city.name = '北京--0'"];
+    NSLog(@"sumCount = %@",sumCount);
     
     /// 2.1 查询上面存储的模型对象演示代码
     
@@ -216,7 +235,7 @@
 
 - (NSArray *)makeArrayPerson {
     NSMutableArray * personArray = [NSMutableArray array];
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 10; i++) {
         Person * person = [Person new];
         person.name = [NSString stringWithFormat:@"吴海超--%d",i];
         person.age = 25 + i;
