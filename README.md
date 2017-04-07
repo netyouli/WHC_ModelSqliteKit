@@ -54,6 +54,7 @@ NSArray * result = [WHCSqlite query:[Person class]
 - 当模型类有新增/删除属性的时候需要在模型类里定义类方法whc_SqliteVersion方法修改模型类(数据库)版本号来表明有字段更新操作，库会根据这个VERSION变更智能检查并自动更新数据库字段，无需手动更新数据库字段
 - 当存储NSArray/NSDictionary属性并且里面是自定义模型对象时，模型对象必须实现NSCoding协议，可以使用[WHC_Model](https://github.com/netyouli/WHC_Model)库一行代码实现NSCoding相关代码
 - 当需要模型类忽略属性存储数据表时实现whc_IgnorePropertys协议方法即可return要忽略属性名称数组
+- 好用的Mac开源工具：[Json生成Class](https://github.com/netyouli/WHC_DataModelFactory),[扫描无用图片](https://github.com/netyouli/WHC_ScanUnreferenceImageTool),[扫描无用类](https://github.com/netyouli/WHC_Scan),[keyborad](https://github.com/netyouli/WHC_KeyboardManager)
 
 ```objective-c
 /// 数据库协议信息
