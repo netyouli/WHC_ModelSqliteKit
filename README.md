@@ -93,7 +93,7 @@ NSArray * result = [WHCSqlite query:[Person class]
 
 用法
 ==============
-####1.存储嵌套模型对象到数据库演示
+#### 1.存储嵌套模型对象到数据库演示
 ```objective-c
 Person * whc = [Person new];
 whc.name = @"吴海超";
@@ -132,19 +132,19 @@ whc.dictCar = @{@"car": tempCar};
 [WHCSqlite insert:whc];
 ```
 
-####2.存储批量模型对象到数据库演示
+#### 2.存储批量模型对象到数据库演示
 ```objective-c
 NSArray * persons = [self makeArrayPerson];
 [WHCSqlite inserts:persons];
 ```
 
-####3.无条件查询(查询所有记录)数据库中模型类演示
+#### 3.无条件查询(查询所有记录)数据库中模型类演示
 ```objective-c
 NSArray * personArray = [WHCSqlite query:[Person class]];
 
 ```
 
-####3.1.使用Sqlite函数查询数据库演示
+#### 3.1.使用Sqlite函数查询数据库演示
 ```objective-c
 /// 获取Person表所有name和name长度
 NSArray * nameArray = [WHCSqlite query:[Person class] func:@"name, length(name)"];
@@ -164,18 +164,18 @@ NSLog(@"sumCount = %@",sumCount);
 
 ```
 
-####4.条件查询数据库中模型类演示(where 条件查询语法和sql where条件查询语法一样)
+#### 4.条件查询数据库中模型类演示(where 条件查询语法和sql where条件查询语法一样)
 ```objective-c
 NSArray * personArray = [WHCSqlite query:[Person class] where:@"name = '吴海超2' OR age <= 18"];
 ```
 
-####5.查询数据库并对结果排序
+#### 5.查询数据库并对结果排序
 ```objective-c
 ///对person数据表查询并且根据age自动降序或者升序排序
 [WHCSqlite query:[Person class] order:@"by age desc/asc"];
 ```
 
-####6.查询数据库并对结果限制查询条数
+#### 6.查询数据库并对结果限制查询条数
 ```objective-c
 /// 对person数据表查询并且并且限制查询数量为8
 [WHCSqlite query:[Person class] limit:@"8"];
@@ -185,35 +185,35 @@ NSArray * personArray = [WHCSqlite query:[Person class] where:@"name = '吴海�
 
 ```
 
-####7.修改数据库中模型对象演示(where 条件查询语法和sql where条件查询语法一样) 
+#### 7.修改数据库中模型对象演示(where 条件查询语法和sql where条件查询语法一样) 
 ```objective-c
 [WHCSqlite update:whc where:@"name = '吴海超2' OR age <= 18"];
 ```
-####8.删除数据库中模型对象演示(where条件查询为空则删除所有)
+#### 8.删除数据库中模型对象演示(where条件查询为空则删除所有)
 ```objective-c
 [WHCSqlite delete:[Person class] where:@"age = 25 AND name = '吴海超'"];
 ```
 
-####9.清空指定数据库演示
+#### 9.清空指定数据库演示
 ```objective-c
 [WHCSqlite clear:[Person class]];
 ```
 
-####10.删除数据库演示
+#### 10.删除数据库演示
 ```objective-c
 [WHCSqlite removeModel:[Person class]];
 ```
 
-####11.删除所有数据库演示
+#### 11.删除所有数据库演示
 ```objective-c
 [WHCSqlite removeAllModel];
 ```
 
-####12.获取数据库本地路径演示
+#### 12.获取数据库本地路径演示
 ```objective-c
 NSString * path = [WHCSqlite localPathWithModel:[Person class]];
 ```
-####13.获取数据库本地版本号演示
+#### 13.获取数据库本地版本号演示
 ```objective-c
 NSString * path = [WHCSqlite versionWithModel:[Person class]];
 ```
