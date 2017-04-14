@@ -29,7 +29,12 @@
 #import "WHC_ModelSqlite.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
+#ifdef SQLITE_HAS_CODEC
+#import "sqlite3.h"
+#else
 #import <sqlite3.h>
+#endif
+
 
 
 static const NSString * WHC_String     = @"TEXT";
