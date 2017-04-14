@@ -29,7 +29,7 @@
 
 #import <Foundation/Foundation.h>
 
-#define WHCSqlite ([WHC_ModelSqlite class])
+#define WHCSqlite WHC_ModelSqlite
 
 /// 数据库协议信息
 @protocol WHC_SqliteInfo <NSObject>

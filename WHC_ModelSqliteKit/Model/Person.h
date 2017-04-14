@@ -28,11 +28,12 @@
 // THE SOFTWARE.
 
 #import <Foundation/Foundation.h>
+#import "WHC_ModelSqlite.h"
 #import "Car.h"
 #import "School.h"
 #import "Animal.h"
 
-@interface Person : Animal
+@interface Person : Animal<WHC_SqliteInfo>
 @property (nonatomic, copy) NSString * name;
 @property (nonatomic, assign) long age;
 @property (nonatomic, assign) float weight;

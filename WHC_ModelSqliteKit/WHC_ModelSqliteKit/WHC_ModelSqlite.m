@@ -224,6 +224,9 @@ static sqlite3 * _whc_database;
         NSString * property_attributes_string = [NSString stringWithUTF8String:property_attributes];
         NSArray * property_attributes_list = [property_attributes_string componentsSeparatedByString:@"\""];
         NSString * name = property_name_string;
+        if (![model_class instancesRespondToSelector:NSSelectorFromString([NSString stringWithFormat:@"set%@%@:",[property_name_string substringToIndex:1].uppercaseString,[property_name_string substringFromIndex:1]])]) {
+            continue;
+        }
         if (!need_dictionary_save) {
             name = [NSString stringWithFormat:@"%@$%@",main_property_name,property_name_string];
         }
