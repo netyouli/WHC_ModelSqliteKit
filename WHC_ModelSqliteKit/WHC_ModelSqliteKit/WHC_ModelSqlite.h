@@ -199,7 +199,7 @@
  @param sql sql语句
  @return 查询模型对象数组
  
- /// example: [WHC_ModelSqlite query:[Person class] sql:@"select cc.* from ( select tt.*,(select count(*)+1 from Chapter where chapter_id =tt.chapter_id and updateTime<tt.updateTime ) as group_id from Chapter tt) cc where cc.group_id<=7 order by updateTime desc;"];
+ /// example: [WHC_ModelSqlite query:Model.self sql:@"select cc.* from ( select tt.*,(select count(*)+1 from Chapter where chapter_id =tt.chapter_id and updateTime<tt.updateTime ) as group_id from Chapter tt) cc where cc.group_id<=7 order by updateTime desc"];
  */
 + (NSArray *)query:(Class)model_class sql:(NSString *)sql;
 
