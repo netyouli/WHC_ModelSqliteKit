@@ -39,7 +39,9 @@ NSArray * result = [WHCSqlite query:[Person class]
 persons = [WHCSqlite query:Person.self sql:@"select * from Person"];
 
 /// 来个复杂的例如：
-[WHCSqlite query:Model.self sql:@"select cc.* from ( select tt.*,(select count(*)+1 from Chapter where chapter_id =tt.chapter_id and updateTime<tt.updateTime ) as group_id from Chapter tt) cc where cc.group_id<=7 order by updateTime desc"];
+[WHCSqlite query:Model.self sql:@"select cc.* from 
+     ( select tt.*,(select count(*)+1 from Chapter where chapter_id =tt.chapter_id and updateTime<tt.updateTime ) as group_id from Chapter tt)
+     cc where cc.group_id<=7 order by updateTime desc"];
 ```
 
 要求
