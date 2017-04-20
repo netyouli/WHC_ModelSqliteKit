@@ -33,6 +33,15 @@ NSArray * result = [WHCSqlite query:[Person class]
         where:@"name = '吴海超' and car.name = '宝马' or school.city.name = '北京'"];
 ```
 
+自定义sql查询
+==============
+```objective-c
+persons = [WHCSqlite query:Person.self sql:@"select * from Person"];
+
+/// 来个复杂的例如：
+[WHCSqlite query:Model.self sql:@"select cc.* from ( select tt.*,(select count(*)+1 from Chapter where chapter_id =tt.chapter_id and updateTime<tt.updateTime ) as group_id from Chapter tt) cc where cc.group_id<=7 order by updateTime desc"];
+```
+
 要求
 ==============
 * iOS 5.0 or later
@@ -350,6 +359,18 @@ Api文档
 /// 对person数据表查询age小于30岁并且根据age自动降序或者升序排序并且限制查询的数量为8偏移为8
 
 + (NSArray *)query:(Class)model_class where:(NSString *)where order:(NSString *)order limit:(NSString *)limit;
+
+
+/**
+说明: 自定义sql查询
+
+@param model_class 接收model类
+@param sql sql语句
+@return 查询模型对象数组
+
+/// example: [WHC_ModelSqlite query:[Person class] sql:@"select cc.* from ( select tt.*,(select count(*)+1 from Chapter where chapter_id =tt.chapter_id and updateTime<tt.updateTime ) as group_id from Chapter tt) cc where cc.group_id<=7 order by updateTime desc;"];
+*/
++ (NSArray *)query:(Class)model_class sql:(NSString *)sql;
 
 /**
 * 说明: 利用sqlite 函数进行查询
