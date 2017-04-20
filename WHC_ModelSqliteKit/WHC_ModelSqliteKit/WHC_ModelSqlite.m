@@ -823,7 +823,6 @@ static sqlite3 * _whc_database;
 }
 
 + (NSArray *)commonQuery:(Class)model_class conditions:(NSArray *)conditions queryType:(WHC_QueryType)query_type {
-    NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:model_class];
     NSString * table_name = NSStringFromClass(model_class);
     NSString * select_sql = [NSString stringWithFormat:@"SELECT * FROM %@",table_name];
     NSString * where = nil;
@@ -921,9 +920,14 @@ static sqlite3 * _whc_database;
                 break;
         }
     }
+    return [self startSqlQuery:model_class sql:select_sql];
+}
+
++ (NSArray *)startSqlQuery:(Class)model_class sql:(NSString *)sql {
+    NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:model_class];
     NSMutableArray * model_object_array = [NSMutableArray array];
     sqlite3_stmt * pp_stmt = nil;
-    if (sqlite3_prepare_v2(_whc_database, [select_sql UTF8String], -1, &pp_stmt, nil) == SQLITE_OK) {
+    if (sqlite3_prepare_v2(_whc_database, [sql UTF8String], -1, &pp_stmt, nil) == SQLITE_OK) {
         int colum_count = sqlite3_column_count(pp_stmt);
         while (sqlite3_step(pp_stmt) == SQLITE_ROW) {
             id model_object = [self autoNewSubmodelWithClass:model_class];
@@ -1081,6 +1085,20 @@ static sqlite3 * _whc_database;
     return [self queryModel:model_class conditions:@[where == nil ? @"" : where,
                                                      order == nil ? @"" : order,
                                                      limit == nil ? @"" : limit] queryType:_WhereOrderLimit];
+}
+
++ (NSArray *)query:(Class)model_class sql:(NSString *)sql {
+    if (sql && sql.length > 0) {
+        if (![self localNameWithModel:model_class]) {return @[];}
+        dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
+        if (![self openTable:model_class]) return @[];
+        NSArray * model_object_array = [self startSqlQuery:model_class sql:sql];
+        [self close];
+        dispatch_semaphore_signal([self shareInstance].dsema);
+        return model_object_array;
+    }
+    [self log:@"sql 查询语句不能为空"];
+    return @[];
 }
 
 + (NSUInteger)count:(Class)model_class {

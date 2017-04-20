@@ -13,7 +13,7 @@ s.author             = { "吴海超(WHC)" => "712641411@qq.com" }
 s.platform     = :ios
 s.platform     = :ios, "6.0"
 
-s.source       = { :git => "https://github.com/netyouli/WHC_ModelSqliteKit.git", :tag => "1.2.0"}
+s.source       = { :git => "https://github.com/netyouli/WHC_ModelSqliteKit.git", :tag => "1.2.1"}
 
 s.source_files  = "WHC_ModelSqliteKit/WHC_ModelSqliteKit/*.{h,m}"
 s.default_subspec = 'standard' 

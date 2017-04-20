@@ -191,6 +191,16 @@
 
 + (NSArray *)query:(Class)model_class where:(NSString *)where order:(NSString *)order limit:(NSString *)limit;
 
+
+/**
+ 说明: 自定义sql查询
+
+ @param model_class 接收model类
+ @param sql sql语句
+ @return 查询模型对象数组
+ */
++ (NSArray *)query:(Class)model_class sql:(NSString *)sql;
+
 /**
  * 说明: 利用sqlite 函数进行查询
  

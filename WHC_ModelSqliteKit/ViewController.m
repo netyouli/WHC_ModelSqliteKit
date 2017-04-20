@@ -115,6 +115,8 @@
     
     NSArray * personss = [WHCSqlite query:[Person class]];
     
+    personss = [WHCSqlite query:Person.self sql:@"select * from Person"];
+    
     /// 1.1查询上面存储的模型对象
         // where 参数为空查询所有, 查询语法和sql 语句一样
     NSArray * personArray = [WHCSqlite query:[Person class]
