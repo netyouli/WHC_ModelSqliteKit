@@ -1355,6 +1355,35 @@ static sqlite3 * _whc_database;
     return result;
 }
 
++ (BOOL)update:(Class)model_class value:(NSString *)value where:(NSString *)where {
+    if (model_class == nil) return NO;
+    BOOL result = YES;
+    if ([self localNameWithModel:model_class]) {
+        dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
+        @autoreleasepool {
+            if ([self openTable:model_class]) {
+                if (value != nil && value.length > 0) {
+                    NSString * table_name = NSStringFromClass(model_class);
+                    NSString * update_sql = [NSString stringWithFormat:@"UPDATE %@ SET %@",table_name,value];
+                    if (where != nil && where.length > 0) {
+                        update_sql = [update_sql stringByAppendingFormat:@" WHERE %@", [self handleWhere:where]];
+                    }
+                    result = [self execSql:update_sql];
+                    [self close];
+                }else {
+                    result = NO;
+                }
+            }else {
+                result = NO;
+            }
+        }
+        dispatch_semaphore_signal([self shareInstance].dsema);
+    }else {
+        result = NO;
+    }
+    return result;
+}
+
 + (BOOL)clear:(Class)model_class {
     return [self delete:model_class where:nil];
 }

@@ -178,7 +178,9 @@
     
     /// 3.修改存储模型对象演示代码
     
-    [WHCSqlite update:person
+    BOOL result = [WHCSqlite update:Person.self value:@"name = 'whc', age = 100" where:@"age > 25"];
+    
+    result = [WHCSqlite update:person
                       where:@"name = '吴超1000' OR age >= 1000"];
     NSLog(@"修改批量模型对象成功");
     
