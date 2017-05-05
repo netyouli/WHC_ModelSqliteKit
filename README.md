@@ -198,7 +198,10 @@ NSArray * personArray = [WHCSqlite query:[Person class] where:@"name = '吴海�
 
 #### 7.修改数据库中模型对象演示(where 条件查询语法和sql where条件查询语法一样) 
 ```objective-c
+/// 更新整条记录
 [WHCSqlite update:whc where:@"name = '吴海超2' OR age <= 18"];
+/// 更新整条记录中的指定字段（更新Person表在age字段大于25岁时name值为whc，age为100岁）
+[WHCSqlite update:Person.self value:@"name = 'whc', age = 100" where:@"age > 25"];
 ```
 #### 8.删除数据库中模型对象演示(where条件查询为空则删除所有)
 ```objective-c
@@ -284,7 +287,7 @@ Api文档
 * @return 查询模型对象数组
 */
 
-/// example: [WHC_ModelSqlite query:[Person class] order:@"by age desc/asc"];
+/// example: [WHCSqlite query:[Person class] order:@"by age desc/asc"];
 /// 对person数据表查询并且根据age自动降序或者升序排序
 
 + (NSArray *)query:(Class)model_class order:(NSString *)order;
@@ -296,9 +299,9 @@ Api文档
 * @return 查询模型对象数组
 */
 
-/// example: [WHC_ModelSqlite query:[Person class] limit:@"8"];
+/// example: [WHCSqlite query:[Person class] limit:@"8"];
 /// 对person数据表查询并且并且限制查询数量为8
-/// example: [WHC_ModelSqlite query:[Person class] limit:@"8 offset 8"];
+/// example: [WHCSqlite query:[Person class] limit:@"8 offset 8"];
 /// 对person数据表查询并且对查询列表偏移8并且限制查询数量为8
 
 + (NSArray *)query:(Class)model_class limit:(NSString *)limit;
@@ -311,7 +314,7 @@ Api文档
 * @return 查询模型对象数组
 */
 
-/// example: [WHC_ModelSqlite query:[Person class] where:@"age < 30" order:@"by age desc/asc"];
+/// example: [WHCSqlite query:[Person class] where:@"age < 30" order:@"by age desc/asc"];
 /// 对person数据表查询age小于30岁并且根据age自动降序或者升序排序
 
 + (NSArray *)query:(Class)model_class where:(NSString *)where order:(NSString *)order;
@@ -324,9 +327,9 @@ Api文档
 * @return 查询模型对象数组
 */
 
-/// example: [WHC_ModelSqlite query:[Person class] where:@"age <= 30" limit:@"8"];
+/// example: [WHCSqlite query:[Person class] where:@"age <= 30" limit:@"8"];
 /// 对person数据表查询age小于30岁并且限制查询数量为8
-/// example: [WHC_ModelSqlite query:[Person class] where:@"age <= 30" limit:@"8 offset 8"];
+/// example: [WHCSqlite query:[Person class] where:@"age <= 30" limit:@"8 offset 8"];
 /// 对person数据表查询age小于30岁并且对查询列表偏移8并且限制查询数量为8
 
 + (NSArray *)query:(Class)model_class where:(NSString *)where limit:(NSString *)limit;
@@ -339,9 +342,9 @@ Api文档
 * @return 查询模型对象数组
 */
 
-/// example: [WHC_ModelSqlite query:[Person class] order:@"by age desc/asc" limit:@"8"];
+/// example: [WHCSqlite query:[Person class] order:@"by age desc/asc" limit:@"8"];
 /// 对person数据表查询并且根据age自动降序或者升序排序并且限制查询的数量为8
-/// example: [WHC_ModelSqlite query:[Person class] order:@"by age desc/asc" limit:@"8 offset 8"];
+/// example: [WHCSqlite query:[Person class] order:@"by age desc/asc" limit:@"8 offset 8"];
 /// 对person数据表查询并且根据age自动降序或者升序排序并且限制查询的数量为8偏移为8
 
 + (NSArray *)query:(Class)model_class order:(NSString *)order limit:(NSString *)limit;
@@ -355,9 +358,9 @@ Api文档
 * @return 查询模型对象数组
 */
 
-/// example: [WHC_ModelSqlite query:[Person class] where:@"age <= 30" order:@"by age desc/asc" limit:@"8"];
+/// example: [WHCSqlite query:[Person class] where:@"age <= 30" order:@"by age desc/asc" limit:@"8"];
 /// 对person数据表查询age小于30岁并且根据age自动降序或者升序排序并且限制查询的数量为8
-/// example: [WHC_ModelSqlite query:[Person class] where:@"age <= 30" order:@"by age desc/asc" limit:@"8 offset 8"];
+/// example: [WHCSqlite query:[Person class] where:@"age <= 30" order:@"by age desc/asc" limit:@"8 offset 8"];
 /// 对person数据表查询age小于30岁并且根据age自动降序或者升序排序并且限制查询的数量为8偏移为8
 
 + (NSArray *)query:(Class)model_class where:(NSString *)where order:(NSString *)order limit:(NSString *)limit;
@@ -370,7 +373,7 @@ Api文档
 @param sql sql语句
 @return 查询模型对象数组
 
-/// example: [WHC_ModelSqlite query:[Person class] sql:@"select cc.* from ( select tt.*,(select count(*)+1 from Chapter where chapter_id =tt.chapter_id and updateTime<tt.updateTime ) as group_id from Chapter tt) cc where cc.group_id<=7 order by updateTime desc;"];
+/// example: [WHCSqlite query:Model.self sql:@"select cc.* from ( select tt.*,(select count(*)+1 from Chapter where chapter_id =tt.chapter_id and updateTime<tt.updateTime ) as group_id from Chapter tt) cc where cc.group_id<=7 order by updateTime desc"];
 */
 + (NSArray *)query:(Class)model_class sql:(NSString *)sql;
 
@@ -380,8 +383,8 @@ Api文档
 * @param model_class 要查询模型类
 * @param sqliteFunc sqlite函数例如：（MAX(age),MIN(age),COUNT(*)....）
 * @return 返回查询结果(如果结果条数 > 1返回Array , = 1返回单个值 , = 0返回nil)
-* /// example: [WHC_ModelSqlite query:[Person class] sqliteFunc:@"max(age)"];  /// 获取Person表的最大age值
-* /// example: [WHC_ModelSqlite query:[Person class] sqliteFunc:@"count(*)"];  /// 获取Person表的总记录条数
+* /// example: [WHCSqlite query:[Person class] sqliteFunc:@"max(age)"];  /// 获取Person表的最大age值
+* /// example: [WHCSqlite query:[Person class] sqliteFunc:@"count(*)"];  /// 获取Person表的总记录条数
 */
 + (id)query:(Class)model_class func:(NSString *)func;
 
@@ -392,18 +395,31 @@ Api文档
 * @param sqliteFunc sqlite函数例如：（MAX(age),MIN(age),COUNT(*)....）
 * @param condition 其他查询条件例如：(where age > 20 order by age desc ....)
 * @return 返回查询结果(如果结果条数 > 1返回Array , = 1返回单个值 , = 0返回nil)
-* /// example: [WHC_ModelSqlite query:[Person class] sqliteFunc:@"max(age)" condition:@"where name = '北京'"];  /// 获取Person表name=北京集合中的的最大age值
-* /// example: [WHC_ModelSqlite query:[Person class] sqliteFunc:@"count(*)" condition:@"where name = '北京'"];  /// 获取Person表name=北京集合中的总记录条数
+* /// example: [WHCSqlite query:[Person class] sqliteFunc:@"max(age)" condition:@"where name = '北京'"];  /// 获取Person表name=北京集合中的的最大age值
+* /// example: [WHCSqlite query:[Person class] sqliteFunc:@"count(*)" condition:@"where name = '北京'"];  /// 获取Person表name=北京集合中的总记录条数
 */
 + (id)query:(Class)model_class func:(NSString *)func condition:(NSString *)condition;
 
 /**
 * 说明: 更新本地模型对象
-* @param model_class 模型类
+* @param model_object 模型对象
 * @param where 查询条件(查询语法和SQL where 查询语法一样，where为空则更新所有)
 */
 
 + (BOOL)update:(id)model_object where:(NSString *)where;
+
+
+/**
+说明: 更新数据表字段
+
+@param model_class 模型类
+@param value 更新的值
+@param where 更新条件
+@return 是否成功
+/// 更新Person表在age字段大于25岁是的name值为whc，age为100岁
+/// example: [WHCSqlite update:Person.self value:@"name = 'whc', age = 100" where:@"age > 25"];
+*/
++ (BOOL)update:(Class)model_class value:(NSString *)value where:(NSString *)where;
 
 /**
 * 说明: 清空本地模型对象
