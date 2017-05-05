@@ -1361,8 +1361,8 @@ static sqlite3 * _whc_database;
     if ([self localNameWithModel:model_class]) {
         dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
         @autoreleasepool {
-            if ([self openTable:model_class]) {
-                if (value != nil && value.length > 0) {
+            if (value != nil && value.length > 0) {
+                if ([self openTable:model_class]) {
                     NSString * table_name = NSStringFromClass(model_class);
                     NSString * update_sql = [NSString stringWithFormat:@"UPDATE %@ SET %@",table_name,value];
                     if (where != nil && where.length > 0) {
