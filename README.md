@@ -66,6 +66,7 @@ persons = [WHCSqlite query:Person.self sql:@"select * from Person"];
 - 当存储NSArray/NSDictionary属性并且里面是自定义模型对象时，模型对象必须实现NSCoding协议，可以使用[WHC_Model](https://github.com/netyouli/WHC_Model)库一行代码实现NSCoding相关代码
 - 当需要模型类忽略属性存储数据表时实现whc_IgnorePropertys协议方法即可return要忽略属性名称数组
 - 好用的Mac开源工具：[Json生成Class](https://github.com/netyouli/WHC_DataModelFactory),[扫描无用图片](https://github.com/netyouli/WHC_ScanUnreferenceImageTool),[扫描无用类](https://github.com/netyouli/WHC_Scan),[keyborad](https://github.com/netyouli/WHC_KeyboardManager)
+- 如果要获取主键id需要在model里声明属性：@property (nonatomic, assign) NSInteger whcId; 
 
 ```objective-c
 /// 数据库协议信息
