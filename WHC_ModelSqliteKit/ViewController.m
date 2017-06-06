@@ -101,6 +101,8 @@
     [WHCSqlite insert:person];
     NSLog(@"线程3.存储单个模型对象到数据库演示代码");
     
+    NSArray * ps = [WHCSqlite query:Person.self];
+    
     /// 获取Person表所有name和name长度
     NSArray * nameArray = [WHCSqlite query:[Person class] func:@"name, length(name)"];
     NSLog(@"nameArray = %@",nameArray);

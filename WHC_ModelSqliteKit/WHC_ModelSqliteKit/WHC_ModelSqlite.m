@@ -93,7 +93,11 @@ static sqlite3 * _whc_database;
     if (self) {
         _name = name.mutableCopy;
         _type = type;
-        _setter = NSSelectorFromString([NSString stringWithFormat:@"set%@%@:",[property_name substringToIndex:1].uppercaseString,[property_name substringFromIndex:1]]);
+        if (property_name.length > 1) {
+            _setter = NSSelectorFromString([NSString stringWithFormat:@"set%@%@:",[property_name substringToIndex:1].uppercaseString,[property_name substringFromIndex:1]]);
+        }else {
+            _setter = NSSelectorFromString([NSString stringWithFormat:@"set%@:",property_name.uppercaseString]);
+        }
         _getter = NSSelectorFromString(property_name);
     }
     return self;
@@ -224,14 +228,22 @@ static sqlite3 * _whc_database;
         const char * property_name = property_getName(property);
         const char * property_attributes = property_getAttributes(property);
         NSString * property_name_string = [NSString stringWithUTF8String:property_name];
-        if ((ignore_propertys && [ignore_propertys containsObject:property_name_string]) || [property_name_string isEqualToString:@"whcId"]) {
+        if ((ignore_propertys && [ignore_propertys containsObject:property_name_string]) || [property_name_string isEqualToString:@"whcId"] ||
+            [property_name_string isEqualToString:[self getMainKeyWithClass:model_class]]) {
             continue;
         }
         NSString * property_attributes_string = [NSString stringWithUTF8String:property_attributes];
         NSArray * property_attributes_list = [property_attributes_string componentsSeparatedByString:@"\""];
         NSString * name = property_name_string;
-        if (![model_class instancesRespondToSelector:NSSelectorFromString([NSString stringWithFormat:@"set%@%@:",[property_name_string substringToIndex:1].uppercaseString,[property_name_string substringFromIndex:1]])]) {
-            continue;
+        
+        if (property_name_string.length > 1) {
+            if (![model_class instancesRespondToSelector:NSSelectorFromString([NSString stringWithFormat:@"set%@%@:",[property_name_string substringToIndex:1].uppercaseString,[property_name_string substringFromIndex:1]])]) {
+                continue;
+            }
+        }else {
+            if (![model_class instancesRespondToSelector:NSSelectorFromString([NSString stringWithFormat:@"set%@:",property_name_string.uppercaseString])]) {
+                continue;
+            }
         }
         if (!need_dictionary_save) {
             name = [NSString stringWithFormat:@"%@$%@",main_property_name,property_name_string];
@@ -349,7 +361,7 @@ static sqlite3 * _whc_database;
 + (sqlite_int64)getModelMaxIdWithClass:(Class)model_class {
     sqlite_int64 max_id = 0;
     if (_whc_database) {
-        NSString * select_sql = [NSString stringWithFormat:@"SELECT MAX(%@) AS MAXVALUE FROM %@",[self getMainKeyWithClass:model_class],NSStringFromClass(model_class)];
+        NSString * select_sql = [NSString stringWithFormat:@"SELECT MAX(%@) AS MAXVALUE FROM %@",[self getMainKeyWithClass:model_class],[self getTableName:model_class]];
         sqlite3_stmt * pp_stmt = nil;
         if (sqlite3_prepare_v2(_whc_database, [select_sql UTF8String], -1, &pp_stmt, nil) == SQLITE_OK) {
             while (sqlite3_step(pp_stmt) == SQLITE_ROW) {
@@ -364,7 +376,7 @@ static sqlite3 * _whc_database;
 + (NSArray *)getModelFieldNameWithClass:(Class)model_class {
     NSMutableArray * field_name_array = [NSMutableArray array];
     if (_whc_database) {
-        NSString *sql = [NSString stringWithFormat:@"pragma table_info ('%@')",NSStringFromClass(model_class)];
+        NSString *sql = [NSString stringWithFormat:@"pragma table_info ('%@')",[self getTableName:model_class]];
         sqlite3_stmt *pp_stmt;
         if(sqlite3_prepare_v2(_whc_database, [sql UTF8String], -1, &pp_stmt, NULL) == SQLITE_OK){
             while(sqlite3_step(pp_stmt) == SQLITE_ROW) {
@@ -384,7 +396,7 @@ static sqlite3 * _whc_database;
                        newVersion:(NSString *)newVersion
                    localModelName:(NSString *)local_model_name {
     @autoreleasepool {
-        NSString * table_name = NSStringFromClass(model_class);
+        NSString * table_name = [self getTableName:model_class];
         NSString * cache_directory = [self databaseCacheDirectory];
         NSString * database_cache_path = [NSString stringWithFormat:@"%@%@",cache_directory,local_model_name];
         if (sqlite3_open([database_cache_path UTF8String], &_whc_database) == SQLITE_OK) {
@@ -556,13 +568,56 @@ static sqlite3 * _whc_database;
 #endif
 }
 
-+ (BOOL)openTable:(Class)model_class {
-    NSFileManager * file_manager = [NSFileManager defaultManager];
-    NSString * cache_directory = [self databaseCacheDirectory];
-    BOOL is_directory = YES;
-    if (![file_manager fileExistsAtPath:cache_directory isDirectory:&is_directory]) {
-        [file_manager createDirectoryAtPath:cache_directory withIntermediateDirectories:YES attributes:nil error:nil];
++ (NSString *)getTableName:(Class)model_class {
+    SEL selector = @selector(whc_TableName);
+    if ([model_class respondsToSelector:selector]) {
+        NSString * table_name = [self exceSelector:selector modelClass:model_class];
+        if (table_name && table_name.length > 0) {
+            return table_name;
+        }
     }
+    return NSStringFromClass(model_class);
+}
+
++ (void)createFloder:(NSString *)path {
+    BOOL is_directory = YES;
+    NSFileManager * file_manager = [NSFileManager defaultManager];
+    if (![file_manager fileExistsAtPath:path isDirectory:&is_directory]) {
+        [file_manager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil];
+    }
+}
+
++ (NSString *)getSqlitePath:(Class)model_class {
+    SEL selector = @selector(whc_OtherSqlitePath);
+    if ([model_class respondsToSelector:selector]) {
+        NSString * sqlite_path = [self exceSelector:selector modelClass:model_class];
+        if (sqlite_path && sqlite_path.length > 0) {
+            return sqlite_path;
+        }
+    }
+    return nil;
+}
+
++ (NSString *)autoHandleOldSqlite:(Class)model_class {
+    NSString * cache_directory = [self databaseCacheDirectory];
+    [self createFloder:cache_directory];
+    NSString * sqlite_path = [self getSqlitePath:model_class];
+    if (sqlite_path && sqlite_path.length > 0) {
+        BOOL is_directory = NO;
+        NSString * version = [self exceSelector:@selector(whc_SqliteVersion) modelClass:model_class];
+        if (!version || version.length == 0) {version = @"1.0";}
+        NSString * whc_sqlite_path = [NSString stringWithFormat:@"%@%@_v%@.sqlite",cache_directory,NSStringFromClass(model_class),version];
+        NSFileManager * file_manager = [NSFileManager defaultManager];
+        if ([file_manager fileExistsAtPath:sqlite_path isDirectory:&is_directory] &&
+            ![file_manager fileExistsAtPath:whc_sqlite_path isDirectory:&is_directory]) {
+            [file_manager copyItemAtPath:sqlite_path toPath:whc_sqlite_path error:nil];
+        }
+    }
+    return cache_directory;
+}
+
++ (BOOL)openTable:(Class)model_class {
+    NSString * cache_directory = [self autoHandleOldSqlite:model_class];
     SEL VERSION = @selector(whc_SqliteVersion);
     NSString * version = @"1.0";
     if ([model_class respondsToSelector:VERSION]) {
@@ -588,7 +643,7 @@ static sqlite3 * _whc_database;
 }
 
 + (BOOL)createTable:(Class)model_class {
-    NSString * table_name = NSStringFromClass(model_class);
+    NSString * table_name = [self getTableName:model_class];
     NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:model_class];
     if (field_dictionary.count > 0) {
         NSString * main_key = [self getMainKeyWithClass:model_class];
@@ -635,7 +690,7 @@ static sqlite3 * _whc_database;
 + (BOOL)commonInsert:(id)model_object {
     sqlite3_stmt * pp_stmt = nil;
     NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:[model_object class]];
-    NSString * table_name = NSStringFromClass([model_object class]);
+    NSString * table_name = [self getTableName:[model_object class]];
     __block NSString * insert_sql = [NSString stringWithFormat:@"INSERT INTO %@ (",table_name];
     NSArray * field_array = field_dictionary.allKeys;
     NSMutableArray * value_array = [NSMutableArray array];
@@ -887,7 +942,7 @@ static sqlite3 * _whc_database;
 }
 
 + (NSArray *)commonQuery:(Class)model_class conditions:(NSArray *)conditions queryType:(WHC_QueryType)query_type {
-    NSString * table_name = NSStringFromClass(model_class);
+    NSString * table_name = [self getTableName:model_class];
     NSString * select_sql = [NSString stringWithFormat:@"SELECT * FROM %@",table_name];
     NSString * where = nil;
     NSString * order = nil;
@@ -997,6 +1052,19 @@ static sqlite3 * _whc_database;
             id model_object = [self autoNewSubmodelWithClass:model_class];
             if (!model_object) {break;}
             SEL whc_id_sel = NSSelectorFromString(@"setWhcId:");
+            SEL custom_id_sel = nil;
+            NSString * custom_id_key = [self getMainKeyWithClass:model_class];
+            if (custom_id_key && custom_id_key.length > 0) {
+                if (custom_id_key.length > 1) {
+                    custom_id_sel = NSSelectorFromString([NSString stringWithFormat:@"set%@%@:",[custom_id_key substringToIndex:1].uppercaseString,[custom_id_key substringFromIndex:1]]);
+                }else {
+                    custom_id_sel = NSSelectorFromString([NSString stringWithFormat:@"set%@:",custom_id_key.uppercaseString]);
+                }
+            }
+            if (custom_id_sel && [model_object respondsToSelector:custom_id_sel]) {
+                sqlite3_int64 value = sqlite3_column_int64(pp_stmt, 0);
+                ((void (*)(id, SEL, int64_t))(void *) objc_msgSend)((id)model_object, custom_id_sel, value);
+            }
             if ([model_object respondsToSelector:whc_id_sel]) {
                 sqlite3_int64 value = sqlite3_column_int64(pp_stmt, 0);
                 ((void (*)(id, SEL, int64_t))(void *) objc_msgSend)((id)model_object, whc_id_sel, value);
@@ -1185,7 +1253,7 @@ static sqlite3 * _whc_database;
     if (![self openTable:model_class]) return @[];
     NSMutableArray * result_array = [NSMutableArray array];
     @autoreleasepool {
-        NSString * table_name = NSStringFromClass(model_class);
+        NSString * table_name = [self getTableName:model_class];
         if (func == nil || func.length == 0) {
             [self log:@"发现错误 Sqlite Func 不能为空"];
             return nil;
@@ -1289,7 +1357,7 @@ static sqlite3 * _whc_database;
     if (![self openTable:model_class]) return NO;
     sqlite3_stmt * pp_stmt = nil;
     NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:model_class];
-    NSString * table_name = NSStringFromClass(model_class);
+    NSString * table_name = [self getTableName:model_class];
     __block NSString * update_sql = [NSString stringWithFormat:@"UPDATE %@ SET ",table_name];
     
     NSArray * field_array = field_dictionary.allKeys;
@@ -1432,7 +1500,7 @@ static sqlite3 * _whc_database;
         @autoreleasepool {
             if (value != nil && value.length > 0) {
                 if ([self openTable:model_class]) {
-                    NSString * table_name = NSStringFromClass(model_class);
+                    NSString * table_name = [self getTableName:model_class];
                     NSString * update_sql = [NSString stringWithFormat:@"UPDATE %@ SET %@",table_name,value];
                     if (where != nil && where.length > 0) {
                         update_sql = [update_sql stringByAppendingFormat:@" WHERE %@", [self handleWhere:where]];
@@ -1461,7 +1529,7 @@ static sqlite3 * _whc_database;
     BOOL result = YES;
     if ([self localNameWithModel:model_class]) {
         if ([self openTable:model_class]) {
-            NSString * table_name = NSStringFromClass(model_class);
+            NSString * table_name = [self getTableName:model_class];
             NSString * delete_sql = [NSString stringWithFormat:@"DELETE FROM %@",table_name];
             if (where != nil && where.length > 0) {
                 delete_sql = [delete_sql stringByAppendingFormat:@" WHERE %@",[self handleWhere:where]];

@@ -35,6 +35,7 @@
 
 @interface Person : Animal<WHC_SqliteInfo>
 @property (nonatomic, assign) NSInteger whcId;   /// 主键
+@property (nonatomic, assign) NSInteger _id;   /// 主键
 @property (nonatomic, copy) NSString * name;
 @property (nonatomic, assign) long age;
 @property (nonatomic, assign) float weight;

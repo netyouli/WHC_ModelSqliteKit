@@ -63,6 +63,25 @@
  */
 + (NSArray *)whc_IgnorePropertys;
 
+
+/**
+ 引入使用其他方式创建的数据库存储路径比如:FMDB
+ 来使用WHC_Sqlite进行操作其他方式创建的数据库
+
+ @return 存储路径
+ */
++ (NSString *)whc_OtherSqlitePath;
+
+
+/**
+ 指定自定义表名
+
+ 在指定引入其他方式创建的数据库时，这个时候如果表名不是模型类名需要实现该方法指定表名称
+ 
+ @return 表名
+ */
++ (NSString *)whc_TableName;
+
 @end
 
 @interface WHC_ModelSqlite : NSObject
