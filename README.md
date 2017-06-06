@@ -25,6 +25,9 @@ WHC_ModelSqliteKit
 - **咨询**: 712641411
 - **作者**: 吴海超
 
+**升级功能：支持WHC_Sqlite操作使用其他方式创建的数据库，只需要指定路径，如果表名不是模型类名称需要指定表名**
+          **详细使用可以参考提供demo,和WHC_SqliteInfo协议**
+
 多表嵌套复杂查询
 ==============
 ```objective-c
@@ -99,6 +102,25 @@ persons = [WHCSqlite query:Person.self sql:@"select * from Person"];
 @return 返回忽略属性集合
 */
 + (NSArray *)whc_IgnorePropertys;
+
+
+/**
+引入使用其他方式创建的数据库存储路径比如:FMDB
+来使用WHC_Sqlite进行操作其他方式创建的数据库
+
+@return 存储路径
+*/
++ (NSString *)whc_OtherSqlitePath;
+
+
+/**
+指定自定义表名
+
+在指定引入其他方式创建的数据库时，这个时候如果表名不是模型类名需要实现该方法指定表名称
+
+@return 表名
+*/
++ (NSString *)whc_TableName;
 
 @end
 ```
