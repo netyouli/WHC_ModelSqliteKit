@@ -890,6 +890,7 @@ static sqlite3 * _whc_database;
                 }
             }
         }
+        free(propertys);
         return model;
     }
     return nil;
