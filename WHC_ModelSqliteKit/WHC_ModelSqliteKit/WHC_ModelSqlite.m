@@ -535,7 +535,9 @@ static sqlite3 * _whc_database;
         NSUserDefaults * ud = [NSUserDefaults standardUserDefaults];
         NSString * model_name = NSStringFromClass(model);
         NSData * psw_data = [ud objectForKey:[self md5:model_name]];
-        psw = [[NSString alloc] initWithData:psw_data encoding:NSUTF8StringEncoding];
+        if (psw_data) {
+            psw = [[NSString alloc] initWithData:psw_data encoding:NSUTF8StringEncoding];
+        }
     }
     return psw;
 }
