@@ -34,6 +34,13 @@
 /// 数据库协议信息
 @protocol WHC_SqliteInfo <NSObject>
 @optional
+
+/**
+ 自定义数据存储路径
+ @return 自定义数据库路径(目录即可)
+ */
++ (NSString *)whc_SqlitePath;
+
 /// 自定义模型类数据库版本号
 /** 注意：
  ***该返回值在改变数据模型属性类型/增加/删除属性时需要更改否则无法自动更新原来模型数据表字段以及类型***

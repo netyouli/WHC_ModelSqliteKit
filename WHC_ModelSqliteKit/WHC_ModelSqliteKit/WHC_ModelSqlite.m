@@ -130,7 +130,13 @@ static sqlite3 * _whc_database;
     return instance;
 }
 
-+ (NSString *)databaseCacheDirectory {
++ (NSString *)databaseCacheDirectory:(Class)model_class {
+    if (model_class) {
+        NSString * custom_path = [self exceSelector:@selector(whc_SqlitePath) modelClass:model_class];
+        if (custom_path != nil && custom_path.length > 0) {
+            return custom_path;
+        }
+    }
     return [NSString stringWithFormat:@"%@/Library/Caches/WHCSqlite/",NSHomeDirectory()];
 }
 
@@ -397,7 +403,7 @@ static sqlite3 * _whc_database;
                    localModelName:(NSString *)local_model_name {
     @autoreleasepool {
         NSString * table_name = [self getTableName:model_class];
-        NSString * cache_directory = [self databaseCacheDirectory];
+        NSString * cache_directory = [self databaseCacheDirectory: model_class];
         NSString * database_cache_path = [NSString stringWithFormat:@"%@%@",cache_directory,local_model_name];
         if (sqlite3_open([database_cache_path UTF8String], &_whc_database) == SQLITE_OK) {
             [self decryptionSqlite:model_class];
@@ -601,7 +607,7 @@ static sqlite3 * _whc_database;
 }
 
 + (NSString *)autoHandleOldSqlite:(Class)model_class {
-    NSString * cache_directory = [self databaseCacheDirectory];
+    NSString * cache_directory = [self databaseCacheDirectory: model_class];
     [self createFloder:cache_directory];
     NSString * sqlite_path = [self getSqlitePath:model_class];
     if (sqlite_path && sqlite_path.length > 0) {
@@ -1569,7 +1575,7 @@ static sqlite3 * _whc_database;
     dispatch_semaphore_wait([self shareInstance].dsema, DISPATCH_TIME_FOREVER);
     @autoreleasepool {
         NSFileManager * file_manager = [NSFileManager defaultManager];
-        NSString * cache_path = [self databaseCacheDirectory];
+        NSString * cache_path = [self databaseCacheDirectory: nil];
         BOOL is_directory = YES;
         if ([file_manager fileExistsAtPath:cache_path isDirectory:&is_directory]) {
             NSArray * file_array = [file_manager contentsOfDirectoryAtPath:cache_path error:nil];
@@ -1600,7 +1606,7 @@ static sqlite3 * _whc_database;
 + (NSString *)commonLocalPathWithModel:(Class)model_class isPath:(BOOL)isPath {
     NSString * class_name = NSStringFromClass(model_class);
     NSFileManager * file_manager = [NSFileManager defaultManager];
-    NSString * file_directory = [self databaseCacheDirectory];
+    NSString * file_directory = [self databaseCacheDirectory: model_class];
     BOOL isDirectory = YES;
     __block NSString * file_path = nil;
     if ([file_manager fileExistsAtPath:file_directory isDirectory:&isDirectory]) {
