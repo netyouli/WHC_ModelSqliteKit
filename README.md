@@ -25,7 +25,7 @@ WHC_ModelSqliteKit
 - **咨询**: 712641411
 - **作者**: 吴海超
 
-**修复bug: 修复数据库加密失败bug**
+**修复升级: 支持自定义数据库存储路径**
 **升级功能: 支持WHCSqlite操作使用其他方式创建的数据库比如FMDB，只需要指定数据库存储路径。**
           **如果表名不是模型类名称需要指定表名,**
           **详细使用可以参考提供demo,和WHC_SqliteInfo协议**
@@ -57,12 +57,8 @@ persons = [WHCSqlite query:Person.self sql:@"select * from Person"];
 
 集成
 ==============
-* 使用CocoaPods:
--  pod 'WHC_ModelSqliteKit'
-* 需要加密数据库使用CocoaPods:
--  pod 'WHC_ModelSqliteKit/SQLCipher'
-* 手工集成:
--  导入文件夹WHC_ModelSqliteKit
+* 不需要加密使用: pod 'WHC_ModelSqliteKit'
+* 需要加密数据库使用: pod 'WHC_ModelSqliteKit/SQLCipher'
 
 注意
 ==============
@@ -78,6 +74,12 @@ persons = [WHCSqlite query:Person.self sql:@"select * from Person"];
 /// 数据库协议信息
 @protocol WHC_SqliteInfo <NSObject>
 @optional
+/**
+自定义数据存储路径
+@return 自定义数据库路径(目录即可)
+*/
++ (NSString *)whc_SqlitePath;
+
 /// 自定义模型类数据库版本号
 /** 注意：
 ***该返回值在改变数据模型属性类型/增加/删除属性时需要更改否则无法自动更新原来模型数据表字段以及类型***
