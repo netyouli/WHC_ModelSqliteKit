@@ -38,16 +38,18 @@
 
 
 
-static const NSString * WHC_String     = @"TEXT";
-static const NSString * WHC_Int        = @"INTERGER";
-static const NSString * WHC_Boolean    = @"INTERGER";
-static const NSString * WHC_Double     = @"DOUBLE";
-static const NSString * WHC_Float      = @"DOUBLE";
-static const NSString * WHC_Char       = @"NVARCHAR";
-static const NSString * WHC_Data       = @"BLOB";
-static const NSString * WHC_Array      = @"BLOB";
-static const NSString * WHC_Dictionary = @"BLOB";
-static const NSString * WHC_Date       = @"DOUBLE";
+static const NSString * WHC_String            = @"TEXT";
+static const NSString * WHC_Int               = @"INTERGER";
+static const NSString * WHC_Boolean           = @"INTERGER";
+static const NSString * WHC_Double            = @"DOUBLE";
+static const NSString * WHC_Float             = @"DOUBLE";
+static const NSString * WHC_Char              = @"NVARCHAR";
+static const NSString * WHC_Data              = @"BLOB";
+static const NSString * WHC_Array             = @"BLOB";
+static const NSString * WHC_Dictionary        = @"BLOB";
+static const NSString * WHC_MutableArray      = @"BLOB";
+static const NSString * WHC_MutableDictionary = @"BLOB";
+static const NSString * WHC_Date              = @"DOUBLE";
 
 typedef enum : NSUInteger {
     _String,
@@ -60,7 +62,9 @@ typedef enum : NSUInteger {
     _Data,
     _Date,
     _Array,
-    _Dictionary
+    _Dictionary,
+    _MutableArray,
+    _MutableDictionary,
 } WHC_FieldType;
 
 typedef enum : NSUInteger {
@@ -201,6 +205,10 @@ static sqlite3 * _whc_database;
             return WHC_Array;
         case _Dictionary:
             return WHC_Dictionary;
+        case _MutableArray:
+            return WHC_MutableArray;
+        case _MutableDictionary:
+            return WHC_MutableDictionary;
         default:
             break;
     }
@@ -274,6 +282,10 @@ static sqlite3 * _whc_database;
                 property_info = [[WHC_PropertyInfo alloc] initWithType:_Dictionary propertyName:property_name_string name:name];
             }else if (class_type == [NSDate class]) {
                 property_info = [[WHC_PropertyInfo alloc] initWithType:_Date propertyName:property_name_string name:name];
+            }else if (class_type == [NSMutableArray class]){
+                property_info = [[WHC_PropertyInfo alloc] initWithType:_MutableArray propertyName:property_name_string name:name];
+            }else if (class_type == [NSMutableDictionary class]){
+                property_info = [[WHC_PropertyInfo alloc] initWithType:_MutableDictionary propertyName:property_name_string name:name];
             }else if (class_type == [NSSet class] ||
                       class_type == [NSValue class] ||
                       class_type == [NSError class] ||
@@ -664,6 +676,8 @@ static sqlite3 * _whc_database;
                 case _Char:
                 case _Dictionary:
                 case _Array:
+                case _MutableArray:
+                case _MutableDictionary:
                     create_table_sql = [create_table_sql stringByAppendingString:@"NULL,"];
                     break;
                 case _Boolean:
@@ -712,11 +726,59 @@ static sqlite3 * _whc_database;
             value = [model_object valueForKey:field];
         }else {
             value = [model_object valueForKeyPath:[field stringByReplacingOccurrencesOfString:@"$" withString:@"."]];
+            if (!value) {
+                switch (property_info.type) {
+                    case _MutableDictionary:
+                        value = [NSMutableDictionary dictionary];
+                        break;
+                    case _MutableArray:
+                        value = [NSMutableArray array];
+                        break;
+                    case _Dictionary:
+                        value = [NSDictionary dictionary];
+                        break;
+                    case _Array:
+                        value = [NSArray array];
+                        break;
+                    case _Int:
+                    case _Float:
+                    case _Double:
+                    case _Number:
+                    case _Char:
+                        value = @(0);
+                        break;
+                    case _Data:
+                        value = [NSData data];
+                        break;
+                    case _Date:
+                        value = [NSDate date];
+                        break;
+                    case _String:
+                        value = @"";
+                        break;
+                    case _Boolean:
+                        value = @(NO);
+                        break;
+                    default:
+                        [self log:@"子模型类数据类型异常并且不能为nil"];
+                        return;
+                }
+            }
         }
         if (value) {
             [value_array addObject:value];
         }else {
             switch (property_info.type) {
+                case _MutableArray: {
+                    NSData * array_value = [NSKeyedArchiver archivedDataWithRootObject:[NSMutableArray array]];
+                    [value_array addObject:array_value];
+                }
+                    break;
+                case _MutableDictionary: {
+                    NSData * dictionary_value = [NSKeyedArchiver archivedDataWithRootObject:[NSMutableDictionary dictionary]];
+                    [value_array addObject:dictionary_value];
+                }
+                    break;
                 case _Array: {
                     NSData * array_value = [NSKeyedArchiver archivedDataWithRootObject:[NSArray array]];
                     [value_array addObject:array_value];
@@ -786,6 +848,8 @@ static sqlite3 * _whc_database;
             id value = value_array[idx];
             int index = (int)[insert_field_array indexOfObject:field] + 1;
             switch (property_info.type) {
+                case _MutableDictionary:
+                case _MutableArray:
                 case _Dictionary:
                 case _Array: {
                     @try {
@@ -1092,6 +1156,8 @@ static sqlite3 * _whc_database;
                     if (!current_model_object) continue;
                 }
                 switch (property_info.type) {
+                    case _MutableArray:
+                    case _MutableDictionary:
                     case _Dictionary:
                     case _Array: {
                         int length = sqlite3_column_bytes(pp_stmt, column);
@@ -1101,6 +1167,20 @@ static sqlite3 * _whc_database;
                             @try {
                                 id set_value = [NSKeyedUnarchiver unarchiveObjectWithData:value];
                                 if (set_value) {
+                                    switch (property_info.type) {
+                                        case _MutableArray:
+                                            if ([set_value isKindOfClass:[NSArray class]]) {
+                                                set_value = [NSMutableArray arrayWithArray:set_value];
+                                            }
+                                            break;
+                                        case _MutableDictionary:
+                                            if ([set_value isKindOfClass:[NSDictionary class]]) {
+                                                set_value = [NSMutableDictionary dictionaryWithDictionary:set_value];
+                                            }
+                                            break;
+                                        default:
+                                            break;
+                                    }
                                     [current_model_object setValue:set_value forKey:field_name];
                                 }
                             } @catch (NSException *exception) {
@@ -1394,6 +1474,20 @@ static sqlite3 * _whc_database;
             }
             int index = (int)[update_field_array indexOfObject:field] + 1;
             switch (property_info.type) {
+                case _MutableDictionary:
+                case _MutableArray: {
+                    id value = [current_model_object valueForKey:actual_field];
+                    if (value == nil) {
+                        value = property_info.type == _MutableDictionary ? [NSMutableDictionary dictionary] : [NSMutableArray array];
+                    }
+                    @try {
+                        NSData * set_value = [NSKeyedArchiver archivedDataWithRootObject:value];
+                        sqlite3_bind_blob(pp_stmt, index, [set_value bytes], (int)[set_value length], SQLITE_TRANSIENT);
+                    } @catch (NSException *exception) {
+                        [self log:@"update 操作异常 Array/Dictionary 元素没实现NSCoding协议归档失败"];
+                    }
+                }
+                    break;
                 case _Dictionary:
                 case _Array: {
                     id value = [current_model_object valueForKey:actual_field];

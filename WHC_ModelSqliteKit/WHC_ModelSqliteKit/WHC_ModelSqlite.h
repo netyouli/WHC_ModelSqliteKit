@@ -225,7 +225,7 @@
  @param sql sql语句
  @return 查询模型对象数组
  
- /// example: [WHCSqlite query:Model.self sql:@"select cc.* from ( select tt.*,(select count(*)+1 from Chapter where chapter_id =tt.chapter_id and updateTime<tt.updateTime ) as group_id from Chapter tt) cc where cc.group_id<=7 order by updateTime desc"];
+ /// example: [WHCSqlite query:Model.self sql:@"select cc.* from ( select tt.*,(select count(*)+1 from Chapter where chapter_id = tt.chapter_id and updateTime<tt.updateTime ) as group_id from Chapter tt) cc where cc.group_id<=7 order by updateTime desc"];
  */
 + (NSArray *)query:(Class)model_class sql:(NSString *)sql;
 
@@ -233,7 +233,7 @@
  * 说明: 利用sqlite 函数进行查询
  
  * @param model_class 要查询模型类
- * @param sqliteFunc sqlite函数例如：（MAX(age),MIN(age),COUNT(*)....）
+ * @param func sqlite函数例如：（MAX(age),MIN(age),COUNT(*)....）
  * @return 返回查询结果(如果结果条数 > 1返回Array , = 1返回单个值 , = 0返回nil)
  * /// example: [WHCSqlite query:[Person class] sqliteFunc:@"max(age)"];  /// 获取Person表的最大age值
  * /// example: [WHCSqlite query:[Person class] sqliteFunc:@"count(*)"];  /// 获取Person表的总记录条数
@@ -244,7 +244,7 @@
  * 说明: 利用sqlite 函数进行查询
  
  * @param model_class 要查询模型类
- * @param sqliteFunc sqlite函数例如：（MAX(age),MIN(age),COUNT(*)....）
+ * @param func sqlite函数例如：（MAX(age),MIN(age),COUNT(*)....）
  * @param condition 其他查询条件例如：(where age > 20 order by age desc ....)
  * @return 返回查询结果(如果结果条数 > 1返回Array , = 1返回单个值 , = 0返回nil)
  * /// example: [WHCSqlite query:[Person class] sqliteFunc:@"max(age)" condition:@"where name = '北京'"];  /// 获取Person表name=北京集合中的的最大age值
