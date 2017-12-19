@@ -25,6 +25,10 @@ WHC_ModelSqliteKit
 - **咨询**: 712641411
 - **作者**: 吴海超
 
+**修复升级: 修复子模型对象为nil访问子模型属性崩溃bug**
+
+**修复升级: 兼容支持存储NSMutableDictionary， NSMutableArray类型**
+
 **修复升级: 支持自定义数据库存储路径**
 
 **升级功能: 支持WHCSqlite操作使用其他方式创建的数据库比如FMDB，只需要指定数据库存储路径。**
