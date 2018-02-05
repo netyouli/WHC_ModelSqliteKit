@@ -36,10 +36,11 @@
 @optional
 
 /**
- 自定义数据存储路径
- @return 自定义数据库路径(目录即可)
+ 自定义数据存储路径字典
+ @return @{new_path:old_path}
  */
-+ (NSString *)whc_SqlitePath;
++ (NSDictionary *)whc_SqlitePath;
+
 
 /// 自定义模型类数据库版本号
 /** 注意：
@@ -317,4 +318,9 @@
  */
 + (NSString *)versionWithModel:(Class)model_class;
 
+/**
+ * 说明: 返回WHC_ModelSqlit数据库默认目录
+ * @return NSHomeDirectory()/Library/Caches/WHCSqlite/
+ */
++ (NSString *)defaultPath;
 @end

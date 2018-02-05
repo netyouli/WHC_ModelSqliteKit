@@ -42,6 +42,12 @@
 }
 
 + (NSString *)whc_OtherSqlitePath {
-    return [NSString stringWithFormat:@"%@/Library/per.db",NSHomeDirectory()];
+    return [NSString stringWithFormat:@"%@/Library/per.db", NSHomeDirectory()];
 }
+
+//+ (NSDictionary *)whc_SqlitePath {
+//    NSString *key = [NSString stringWithFormat:@"%@%@/", [WHC_ModelSqlite defaultPath], @"1"];
+//    NSString *value = [WHC_ModelSqlite defaultPath];
+//    return @{key: value};
+//}
 @end
