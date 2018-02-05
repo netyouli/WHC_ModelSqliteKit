@@ -40,11 +40,11 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    _detailLabel.text = @"开发者:WHC(吴海超)\n\n专业的数据存储解决方案\n\n由于本开源库主要针对数据存储解决方案所以没有UI演示\n\n测试者可以通过ViewController里测试用例进行断点查看\n\n觉得不错请给予star支持,谢谢";
+    _detailLabel.text = @"开发者:WHC(吴海超)\n\n专业的数据存储解决方案\n\n由于本开源库主要针对数据存储解决方案所以没有UI演示上面的图片是从sqlite里读取的\n\n测试者可以通过ViewController里测试用例进行断点查看\n\n觉得不错请给予star支持,你们的支持是对WHC最大的鼓励,谢谢";
     
-    [WHC_ModelSqlite removeAllModel];
+    [WHCSqlite removeAllModel];
     
-    /// 1.存储单个模型对象到数据库演示代码
+    /// 1.存储模型对象到数据库演示代码
     Person * person = [Person new];
     person.name = @"吴海超";
     person.age = 25;
@@ -54,6 +54,21 @@
     person.sex = 'm';
     person.zz = @(100);
     person.type = @"android";
+    
+    /// 测试继承属性存储
+    person.typeName = @"人";
+    person.eat = YES;
+    
+    /// 测试NSArray属性存储
+    Car * tempCar = [Car new];
+    tempCar.name = @"宝马";
+    tempCar.brand = @"林肯";
+    person.array = @[@"1",@"2"];
+    person.carArray = @[tempCar];
+    
+    /// 测试NSDictionary属性存储
+    person.dict = @{@"1":@"2"};
+    person.dictCar = @{@"car": tempCar};
     
     /// 存储图片
     person.data = UIImagePNGRepresentation([UIImage imageNamed:@"image"]);
@@ -70,24 +85,44 @@
     person.school.city.personCount = 1000;
 
     /// 线程安全测试
+    
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         person.name = @"武汉";
-        [WHC_ModelSqlite insert:person];
+        [WHCSqlite insert:person];
         NSLog(@"线程1.存储单个模型对象到数据库演示代码");
     });
     
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         person.name = @"北京";
-        [WHC_ModelSqlite insert:person];
+        [WHCSqlite insert:person];
         NSLog(@"线程2.存储单个模型对象到数据库演示代码");
     });
-    
-    [WHC_ModelSqlite insert:person];
+
+    [WHCSqlite insert:person];
     NSLog(@"线程3.存储单个模型对象到数据库演示代码");
+    
+    NSArray * ps = [WHCSqlite query:Person.self];
+    
+    /// 获取Person表所有name和name长度
+    NSArray * nameArray = [WHCSqlite query:[Person class] func:@"name, length(name)"];
+    NSLog(@"nameArray = %@",nameArray);
+    
+    /// 获取Person表最大age值
+    NSNumber * maxAge = [WHCSqlite query:[Person class] func:@"max(age)"];
+    NSLog(@"maxAge = %@",maxAge);
+    
+    /// 获取Person表总记录数
+    NSNumber * sumCount = [WHCSqlite query:[Person class] func:@"count(*)"];
+    NSLog(@"sumCount = %@",sumCount);
+    
+    NSArray * personss = [WHCSqlite query:[Person class]];
+    
+    personss = [WHCSqlite query:Person.self sql:@"select * from Person"];
     
     /// 1.1查询上面存储的模型对象
         // where 参数为空查询所有, 查询语法和sql 语句一样
-    NSArray * personArray = [WHC_ModelSqlite query:[Person class] where:@"name != '吴海超'"];
+    NSArray * personArray = [WHCSqlite query:[Person class]
+                                             where:@"name = '吴海超' and car.name = '宝马' or school.city.name = '北京'"];
     [personArray enumerateObjectsUsingBlock:^(Person *  _Nonnull person, NSUInteger idx, BOOL * _Nonnull stop) {
         NSLog(@"第%lu条数据",(unsigned long)idx);
         NSLog(@"name = %@",person.name);
@@ -103,12 +138,16 @@
     /// 2.批量存储模型对象到数据库演示代码
     
     NSArray * persons = [self makeArrayPerson];
-    [WHC_ModelSqlite inserts:persons];
+    [WHCSqlite inserts:persons];
     NSLog(@"2.批量存储模型对象到数据库演示代码");
+    
+    /// 获取Person表字段name = 北京总记录数
+    sumCount = [WHCSqlite query:[Person class] func:@"count(*)" condition:@"where school.city.name = '北京--0'"];
+    NSLog(@"sumCount = %@",sumCount);
     
     /// 2.1 查询上面存储的模型对象演示代码
     
-    personArray = [WHC_ModelSqlite query:[Person class]
+    personArray = [WHCSqlite query:[Person class]
                                    where:nil];
     [personArray enumerateObjectsUsingBlock:^(Person *  _Nonnull person, NSUInteger idx, BOOL * _Nonnull stop) {
         NSLog(@"第%lu条数据",(unsigned long)idx);
@@ -122,11 +161,11 @@
     }];
     
     /// 2.2 新增查询排序api(查询结果按age字段进行递减排序)
-    personArray = [WHC_ModelSqlite query:[Person class] order:@"by age desc"];
+    personArray = [WHCSqlite query:[Person class] order:@"by age desc"];
     
     /// 2.2 条件查询存储的模型对象演示代码
     
-    personArray = [WHC_ModelSqlite query:[Person class]
+    personArray = [WHCSqlite query:[Person class]
                                    where:@"age > 30"];
     [personArray enumerateObjectsUsingBlock:^(Person *  _Nonnull person, NSUInteger idx, BOOL * _Nonnull stop) {
         NSLog(@"第%lu条数据",(unsigned long)idx);
@@ -140,14 +179,17 @@
     }];
     
     /// 3.修改存储模型对象演示代码
-    
-    [WHC_ModelSqlite update:person
-                      where:@"name = '吴海超--2' OR age <= 18"];
+    // 更新整条记录中指定的字段(更新Person表在age字段大于25岁时name值为whc，age为100岁)
+    BOOL result = [WHCSqlite update:Person.self value:@"name = 'whc', age = 100"
+                              where:@"age > 25"];
+    // 更新整条记录
+    result = [WHCSqlite update:person
+                      where:@"name = '吴超1000' OR age >= 1000"];
     NSLog(@"修改批量模型对象成功");
     
     /// 3.1 查询刚刚修改是否成功示例代码
     
-    personArray = [WHC_ModelSqlite query:[Person class]
+    personArray = [WHCSqlite query:[Person class]
                                    where:@"age = 25 AND name = '吴海超'"];
     [personArray enumerateObjectsUsingBlock:^(Person *  _Nonnull person, NSUInteger idx, BOOL * _Nonnull stop) {
         NSLog(@"第%lu条数据",(unsigned long)idx);
@@ -162,12 +204,12 @@
     
     /// 4.删除存储模型对象演示代码
         /*注 where 为空时则表示清空数据库*/
-    [WHC_ModelSqlite delete:[Person class]
+    [WHCSqlite delete:[Person class]
                       where:@"age = 25 AND name = '吴海超'"];
         NSLog(@"删除批量模型对象成功");
     
     /// 4.1 查询刚刚删除是否成功示例代码
-    personArray = [WHC_ModelSqlite query:[Person class] where:nil];
+    personArray = [WHCSqlite query:[Person class] where:nil];
     [personArray enumerateObjectsUsingBlock:^(Person *  _Nonnull person, NSUInteger idx, BOOL * _Nonnull stop) {
         NSLog(@"第%lu条数据",(unsigned long)idx);
         NSLog(@"name = %@",person.name);
@@ -180,27 +222,27 @@
     }];
     
 //    /// 5.1 清空数据库
-//    [WHC_ModelSqlite clear:[Person class]];
+//    [WHCSqlite clear:[Person class]];
 //
 //    /// 9.1 获取数据库版本号
-//    NSString * version = [WHC_ModelSqlite versionWithModel:[Person class]];
+//    NSString * version = [WHCSqlite versionWithModel:[Person class]];
 //    NSLog(@"version = %@",version);
 //    
 //    /// 6.1 删除数据库
-//    [WHC_ModelSqlite removeModel:[Person class]];
+//    [WHCSqlite removeModel:[Person class]];
 //    
 //    /// 7.1删除本地所有数据库
-//    [WHC_ModelSqlite removeAllModel];
+//    [WHCSqlite removeAllModel];
     
     /// 8.1 获取数据库本地路径
-    NSString * path = [WHC_ModelSqlite localPathWithModel:[Person class]];
+    NSString * path = [WHCSqlite localPathWithModel:[Person class]];
     NSLog(@"localPath = %@",path);
     
 }
 
 - (NSArray *)makeArrayPerson {
     NSMutableArray * personArray = [NSMutableArray array];
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 10; i++) {
         Person * person = [Person new];
         person.name = [NSString stringWithFormat:@"吴海超--%d",i];
         person.age = 25 + i;

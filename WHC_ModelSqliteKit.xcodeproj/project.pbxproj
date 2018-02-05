@@ -15,9 +15,9 @@
 		84748B051CF9FC4000139F82 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 84748B031CF9FC4000139F82 /* LaunchScreen.storyboard */; };
 		84748B0F1CF9FC8C00139F82 /* WHC_ModelSqlite.m in Sources */ = {isa = PBXBuildFile; fileRef = 84748B0E1CF9FC8C00139F82 /* WHC_ModelSqlite.m */; };
 		84748B111CF9FD4C00139F82 /* libsqlite3.0.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 84748B101CF9FD4C00139F82 /* libsqlite3.0.tbd */; };
-		84748B131CFA25A400139F82 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 84748B121CFA25A400139F82 /* README.md */; };
-		84748B151CFA310B00139F82 /* WHC_ModelSqliteKit.podspec in Resources */ = {isa = PBXBuildFile; fileRef = 84748B141CFA310B00139F82 /* WHC_ModelSqliteKit.podspec */; };
 		FE050C331D4F49D90029B4A3 /* image.png in Resources */ = {isa = PBXBuildFile; fileRef = FE050C321D4F49D90029B4A3 /* image.png */; };
+		FE76358F1E6A99D300F09701 /* Animal.m in Sources */ = {isa = PBXBuildFile; fileRef = FE76358E1E6A99D300F09701 /* Animal.m */; };
+		FE7635931E6AAC9600F09701 /* NSObject+WHC_Model.m in Sources */ = {isa = PBXBuildFile; fileRef = FE7635921E6AAC9600F09701 /* NSObject+WHC_Model.m */; };
 		FEFFE3311D1B9FC800DF0865 /* Car.m in Sources */ = {isa = PBXBuildFile; fileRef = FEFFE32A1D1B9FC800DF0865 /* Car.m */; };
 		FEFFE3321D1B9FC800DF0865 /* City.m in Sources */ = {isa = PBXBuildFile; fileRef = FEFFE32C1D1B9FC800DF0865 /* City.m */; };
 		FEFFE3331D1B9FC800DF0865 /* Person.m in Sources */ = {isa = PBXBuildFile; fileRef = FEFFE32E1D1B9FC800DF0865 /* Person.m */; };
@@ -38,9 +38,11 @@
 		84748B0D1CF9FC8C00139F82 /* WHC_ModelSqlite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WHC_ModelSqlite.h; sourceTree = "<group>"; };
 		84748B0E1CF9FC8C00139F82 /* WHC_ModelSqlite.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WHC_ModelSqlite.m; sourceTree = "<group>"; };
 		84748B101CF9FD4C00139F82 /* libsqlite3.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
-		84748B121CFA25A400139F82 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		84748B141CFA310B00139F82 /* WHC_ModelSqliteKit.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = WHC_ModelSqliteKit.podspec; sourceTree = "<group>"; };
 		FE050C321D4F49D90029B4A3 /* image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = image.png; sourceTree = "<group>"; };
+		FE76358D1E6A99D300F09701 /* Animal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Animal.h; sourceTree = "<group>"; };
+		FE76358E1E6A99D300F09701 /* Animal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Animal.m; sourceTree = "<group>"; };
+		FE7635911E6AAC9600F09701 /* NSObject+WHC_Model.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+WHC_Model.h"; sourceTree = "<group>"; };
+		FE7635921E6AAC9600F09701 /* NSObject+WHC_Model.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+WHC_Model.m"; sourceTree = "<group>"; };
 		FEFFE3291D1B9FC800DF0865 /* Car.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Car.h; sourceTree = "<group>"; };
 		FEFFE32A1D1B9FC800DF0865 /* Car.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Car.m; sourceTree = "<group>"; };
 		FEFFE32B1D1B9FC800DF0865 /* City.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = City.h; sourceTree = "<group>"; };
@@ -66,9 +68,8 @@
 		84748AE91CF9FC4000139F82 = {
 			isa = PBXGroup;
 			children = (
-				84748B141CFA310B00139F82 /* WHC_ModelSqliteKit.podspec */,
-				84748B121CFA25A400139F82 /* README.md */,
 				84748B101CF9FD4C00139F82 /* libsqlite3.0.tbd */,
+				FE7635901E6AAC9600F09701 /* WHC_ModelKit */,
 				84748AF41CF9FC4000139F82 /* WHC_ModelSqliteKit */,
 				84748AF31CF9FC4000139F82 /* Products */,
 			);
@@ -117,10 +118,21 @@
 			path = WHC_ModelSqliteKit;
 			sourceTree = "<group>";
 		};
+		FE7635901E6AAC9600F09701 /* WHC_ModelKit */ = {
+			isa = PBXGroup;
+			children = (
+				FE7635911E6AAC9600F09701 /* NSObject+WHC_Model.h */,
+				FE7635921E6AAC9600F09701 /* NSObject+WHC_Model.m */,
+			);
+			path = WHC_ModelKit;
+			sourceTree = "<group>";
+		};
 		FEFFE3281D1B9FC800DF0865 /* Model */ = {
 			isa = PBXGroup;
 			children = (
 				FE050C321D4F49D90029B4A3 /* image.png */,
+				FE76358D1E6A99D300F09701 /* Animal.h */,
+				FE76358E1E6A99D300F09701 /* Animal.m */,
 				FEFFE3291D1B9FC800DF0865 /* Car.h */,
 				FEFFE32A1D1B9FC800DF0865 /* Car.m */,
 				FEFFE32B1D1B9FC800DF0865 /* City.h */,
@@ -164,6 +176,7 @@
 				TargetAttributes = {
 					84748AF11CF9FC4000139F82 = {
 						CreatedOnToolsVersion = 7.3.1;
+						DevelopmentTeam = 7F5YZXGNJ3;
 					};
 				};
 			};
@@ -192,7 +205,6 @@
 			files = (
 				84748B051CF9FC4000139F82 /* LaunchScreen.storyboard in Resources */,
 				84748B021CF9FC4000139F82 /* Assets.xcassets in Resources */,
-				84748B151CFA310B00139F82 /* WHC_ModelSqliteKit.podspec in Resources */,
 				84748B001CF9FC4000139F82 /* Main.storyboard in Resources */,
 				FE050C331D4F49D90029B4A3 /* image.png in Resources */,
 			);
@@ -207,11 +219,12 @@
 			files = (
 				FEFFE3311D1B9FC800DF0865 /* Car.m in Sources */,
 				84748AFD1CF9FC4000139F82 /* ViewController.m in Sources */,
+				FE7635931E6AAC9600F09701 /* NSObject+WHC_Model.m in Sources */,
 				FEFFE3331D1B9FC800DF0865 /* Person.m in Sources */,
 				84748AFA1CF9FC4000139F82 /* AppDelegate.m in Sources */,
-				84748B131CFA25A400139F82 /* README.md in Sources */,
 				84748B0F1CF9FC8C00139F82 /* WHC_ModelSqlite.m in Sources */,
 				FEFFE3321D1B9FC800DF0865 /* City.m in Sources */,
+				FE76358F1E6A99D300F09701 /* Animal.m in Sources */,
 				84748AF71CF9FC4000139F82 /* main.m in Sources */,
 				FEFFE3341D1B9FC800DF0865 /* School.m in Sources */,
 			);
@@ -325,6 +338,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 7F5YZXGNJ3;
 				INFOPLIST_FILE = WHC_ModelSqliteKit/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -337,6 +351,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 7F5YZXGNJ3;
 				INFOPLIST_FILE = WHC_ModelSqliteKit/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";

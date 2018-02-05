@@ -28,10 +28,14 @@
 // THE SOFTWARE.
 
 #import <Foundation/Foundation.h>
+#import "WHC_ModelSqlite.h"
 #import "Car.h"
 #import "School.h"
+#import "Animal.h"
 
-@interface Person : NSObject
+@interface Person : Animal<WHC_SqliteInfo>
+@property (nonatomic, assign) NSInteger whcId;   /// 主键
+@property (nonatomic, assign) NSInteger _id;   /// 主键
 @property (nonatomic, copy) NSString * name;
 @property (nonatomic, assign) long age;
 @property (nonatomic, assign) float weight;
@@ -46,5 +50,16 @@
 @property (nonatomic, strong) School * school;
 @property (nonatomic, strong) NSNumber * zz;
 @property (nonatomic, strong) NSData * data;
-+ (NSString *)VERSION;
+@property (nonatomic, strong) NSArray * array;
+@property (nonatomic, strong) NSArray * carArray;
+@property (nonatomic, strong) NSDictionary * dict;
+@property (nonatomic, strong) NSDictionary * dictCar;
+
+/// 下面是忽略属性
+@property (nonatomic, strong) NSString * ignoreAttr1;
+@property (nonatomic, strong) NSString * ignoreAttr2;
+@property (nonatomic, strong) NSString * ignoreAttr3;
+
++ (NSString *)whc_SqliteVersion;
++ (NSArray *)whc_IgnorePropertys;
 @end
