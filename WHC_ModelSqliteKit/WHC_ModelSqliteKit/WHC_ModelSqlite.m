@@ -136,12 +136,60 @@ static sqlite3 * _whc_database;
 
 + (NSString *)databaseCacheDirectory:(Class)model_class {
     if (model_class) {
-        NSString * custom_path = [self exceSelector:@selector(whc_SqlitePath) modelClass:model_class];
-        if (custom_path != nil && custom_path.length > 0) {
-            return custom_path;
+        NSDictionary *custom_dic = [self exceDicSelector:@selector(whc_SqlitePath) modelClass:model_class];
+        if (custom_dic.count) {
+            NSString *floder_path = custom_dic.allKeys.firstObject;
+            if (floder_path != nil && floder_path.length > 0) {
+                NSDictionary *all_file_dic =  [self findAllFileNamebyPath:custom_dic.allValues.firstObject];
+                NSString *new_path = nil;
+                NSString *old_path = all_file_dic[NSStringFromClass(model_class)];
+                if ([old_path containsString:@"/"]) {
+                    NSArray *arr = [old_path componentsSeparatedByString:@"/"];
+                    [self createFloder:floder_path];
+                    new_path = [NSString stringWithFormat:@"%@%@", floder_path, arr.lastObject];
+                }
+                [self moveNewPath:new_path oldPath:old_path];
+                return floder_path;
+            }
         }
     }
     return [NSString stringWithFormat:@"%@/Library/Caches/WHCSqlite/",NSHomeDirectory()];
+}
+
+
++ (void)moveNewPath:(NSString*)newPath oldPath:(NSString*)oldPath {
+    BOOL is_directory = NO;
+    NSFileManager * file_manager = [NSFileManager defaultManager];
+    if ([file_manager fileExistsAtPath:oldPath isDirectory:&is_directory] &&
+        ![file_manager fileExistsAtPath:newPath isDirectory:&is_directory]) {
+        [file_manager moveItemAtPath:oldPath toPath:newPath error:nil];
+    }
+}
+
++ (NSDictionary*)findAllFileNamebyPath:(NSString*)path{
+    NSMutableDictionary *dic = [[NSMutableDictionary alloc] init];
+    NSFileManager * fileManager = [NSFileManager defaultManager];
+    NSDirectoryEnumerator *myDirectoryEnumerator;
+    myDirectoryEnumerator=[fileManager enumeratorAtPath:path];
+    BOOL isDirectory = NO;
+    NSString *tmp_path;
+    while (( tmp_path =[myDirectoryEnumerator nextObject])!=nil) {
+        NSString *new_path = [NSString stringWithFormat:@"%@%@", path, tmp_path];
+        if ([fileManager fileExistsAtPath:new_path isDirectory:&isDirectory]&&[[new_path componentsSeparatedByString:@"."].lastObject isEqualToString:@"sqlite"]) {
+            NSArray *arr = [tmp_path componentsSeparatedByString:@"_v"];
+            if (arr.count&&new_path.length) {
+                NSString *key = arr.firstObject;
+                NSDictionary *oneDic = @{
+                                      key:new_path
+                                      };
+                [dic addEntriesFromDictionary:oneDic];
+            }
+        }
+    }
+    if (dic.count) {
+        return dic;
+    }
+    return nil;
 }
 
 + (WHC_FieldType)parserFieldTypeWithAttr:(NSString *)attr {
@@ -513,6 +561,15 @@ static sqlite3 * _whc_database;
 #else
     return NO;
 #endif
+}
+
++ (NSDictionary *)exceDicSelector:(SEL)selector modelClass:(Class)model_class {
+    if ([model_class respondsToSelector:selector]) {
+        IMP sqlite_info_func = [model_class methodForSelector:selector];
+        NSDictionary * (*func)(id, SEL) = (void *)sqlite_info_func;
+        return func(model_class, selector);
+    }
+    return nil;
 }
 
 + (NSString *)exceSelector:(SEL)selector modelClass:(Class)model_class {
@@ -1741,6 +1798,11 @@ static sqlite3 * _whc_database;
         }
     }
     return model_version;
+}
+
+
++ (NSString *)defaultPath {
+    return [NSString stringWithFormat:@"%@/Library/Caches/WHCSqlite/",NSHomeDirectory()];
 }
 
 + (void)log:(NSString *)msg {
