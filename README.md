@@ -14,16 +14,14 @@ WHC_ModelSqliteKit
 
 简介
 ==============
-- **架构**: 采用runtime和Sqlite完美结合打造的强大数据库操作引擎开源库
+- **架构**: 采用runtime和Sqlite完美结合打造的强大数据库ORM操作引擎开源库
 - **安全**: 支持数据库级别加密
 - **易用**: 真正实现一行代码操作数据库
 - **目标**: 替代直接使用Sqlite和CoreData以及FMDB低效率方式
 - **支持**: (NSMutableDictionary,NSMutableArray，NSArray,NSDictionary,NSDate,NSData,NSString,NSNumber,Int,double,float,Bool,char)类型
 - **灵活**: 支持使用Sqlite函数进行查询,支持忽略模型类属性存储数据表中
-- **强大**: 支持模型嵌套继承模型类存储到数据库和多表嵌套复杂查询
+- **兼容**: 支持模型嵌套继承模型类存储到数据库和多表嵌套复杂查询
 - **智能**: 根据数据库模型类实现的WHC_SqliteInfo协议返回的版本号来智能更新数据库字段(动态删除/添加)
-- **咨询**: 712641411
-- **作者**: 吴海超
 
 **修复升级: 修复子模型对象为nil访问子模型属性崩溃bug**
 
